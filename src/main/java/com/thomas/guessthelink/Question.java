@@ -20,8 +20,10 @@ public class Question {
 
 
     public Question(){} // A constructor that has no args fgor default.
-    public Question(String clue, String imageOne, String imageTwo, String imageThree, String answer, int levelNumber){
-        this.clue = clue;
+    public Question(String clueOne, String clueTwo, String clueThree, String imageOne, String imageTwo, String imageThree, String answer, int levelNumber){
+        this.clueOne = clueOne;
+        this.clueTwo = clueTwo;
+        this.clueThree = clueThree;
         this.imageOne = imageOne;
         this.imageTwo = imageTwo;
         this.imageThree = imageThree;
@@ -29,9 +31,9 @@ public class Question {
         this.levelNumber = levelNumber;
     }
 
-    public String getClue(){ return clue; }
-    public String getImageOne(){ return imageOne; }
-    public String getImageTwo(){ return imageTwo; }
+    public String getClueOne(){ return clueOne; }
+    public String getClueTwo(){ return clueTwo; }
+    public String getClueThree(){ return clueThree; }
     public String getImageThree(){ return imageThree; }
     public String getAnswer(){ return answer; }
     public int getLevelNumber(){ return levelNumber; }

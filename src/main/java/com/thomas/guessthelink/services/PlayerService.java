@@ -35,6 +35,7 @@ public class PlayerService {
     // for that player object, set the coins to what to add and current. then Save
     public Player addCoins(Long id, Long coins) {
         Player player = playerRepo.findById(id).orElse(null);
+        if (player == null) return null;
         player.setCoins(player.getCoins() + coins);
         return playerRepo.save(player);
     }
