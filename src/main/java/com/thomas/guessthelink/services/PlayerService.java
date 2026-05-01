@@ -49,6 +49,10 @@ public class PlayerService {
         player.setCurrentLevel(level);
         return playerRepo.save(player);
         }
+    
+    public Player findByUsername(String username) {
+        return playerRepo.findByUsername(username);
+    }
 
 
 }
