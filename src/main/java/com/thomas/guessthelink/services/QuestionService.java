@@ -1,4 +1,4 @@
-package com.thomas.guessthelink.service;
+package com.thomas.guessthelink.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,17 +11,20 @@ public class QuestionService {
 
     @Autowired //Spring automatically created QuestionRepository object and injected it here.
     // So no new QuestionRepository()
+    // How does question repo work?
     private QuestionRepository questionRepo;
 
 
-    // Gets Questions by level with arguments of int levelNumber from
+    // Gets Questions by level with arguments of int levelNumber from Question.java
     public Question getQuestionByLevel(int levelNumber) {
         return questionRepo.findByLevelNumber(levelNumber); 
-        // Syntax questionRepo is built in with a method with findByLevelNumber with a param of levelnumber?
+        // Syntax questionRepo is built in
+        // FindbyLevlNumber was a method I declared in QuestionRepository
         // Spring Jpa built ins
     }
 
     public List<Question> getAllQuestions() {
         return questionRepo.findAll();
     }
+    // All questions are returned as a list
 }

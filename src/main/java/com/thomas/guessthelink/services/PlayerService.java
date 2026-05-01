@@ -1,10 +1,9 @@
-package com.thomas.guessthelink.service;
+package com.thomas.guessthelink.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.thomas.guessthelink.Player;
 import com.thomas.guessthelink.repository.PlayerRepository;
-import java.util.List;
 
 
 //
@@ -46,6 +45,7 @@ public class PlayerService {
 
     public Player updateLevel(Long id, int level) {
         Player player = playerRepo.findById(id).orElse(null);
+        if (player == null) return null;
         player.setCurrentLevel(level);
         return playerRepo.save(player);
         }
