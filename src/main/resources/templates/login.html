@@ -1,319 +1,321 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=100, minimum-scale=0.2, maximum-scale=0.3, initial-scale=0.2">
-    
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=100, minimum-scale=0.2, maximum-scale=0.3, initial-scale=0.2">
+            
 
-    <title>Linkr — Guess the Link</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <!-- Syne = headings/titles | DM Sans = body text -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        *{box-sizing:border-box;margin:0;padding:0}
+                <title>Linkr — Guess the Link</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <!-- Syne = headings/titles | DM Sans = body text -->
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+            
+            
+            <style>
+                *{box-sizing:border-box;margin:0;padding:0}
 
-        /* ── GLOBAL COLOR TOKENS ── 
-        Change these to retheme the entire page */
-        :root{
-        --bg:#1C000E;                          /* page background */
-        --accent:#cc2266;                      /* primary pink-red accent */
-        --accent2:#ff3388;                     /* brighter accent for hover states */
-        --card-bg:#1c000f;                     /* dark card/panel background */
-        --border:rgba(204,34,102,0.25);        /* subtle accent-colored border */
-        --text:#fff;                           /* primary text */
-        --muted:rgba(255,255,255,0.45);        /* secondary/dimmed text */
-        --input-bg:#1a000e;                    /* input field background */
-        }
+                /* ── GLOBAL COLOR TOKENS ── 
+                Change these to retheme the entire page */
+                :root{
+                --bg:#1C000E;                          /* page background */
+                --accent:#cc2266;                      /* primary pink-red accent */
+                --accent2:#ff3388;                     /* brighter accent for hover states */
+                --card-bg:#1c000f;                     /* dark card/panel background */
+                --border:rgba(204,34,102,0.25);        /* subtle accent-colored border */
+                --text:#fff;                           /* primary text */
+                --muted:rgba(255,255,255,0.45);        /* secondary/dimmed text */
+                --input-bg:#1a000e;                    /* input field background */
+                }
 
-        html, body {
-        overflow: hidden;
-        height: 100%;
-        width: 100%;
-        }
+                html, body {
+                overflow: hidden;
+                height: 100%;
+                width: 100%;
+                }
 
-        .left {
-        position: absolute;
-        height: 100vh;
-        overflow: hidden;
-        }
-            /* ── BASE ── */
-        html{
-            height:100%
-        }
+                .left {
+                position: absolute;
+                height: 100vh;
+                overflow: hidden;
+                }
+                    /* ── BASE ── */
+                html{
+                    height:100%
+                }
 
-        body{
-            background:var(--bg);
-            font-family:'Inter',sans-serif;
-            color:var(--text);
-            min-height:100vh;
-            overflow:hidden;                       /* prevent scrollbars on login */
-        }
+                body{
+                    background:var(--bg);
+                    font-family:'Inter',sans-serif;
+                    color:var(--text);
+                    min-height:100vh;
+                    overflow:hidden;                       /* prevent scrollbars on login */
+                }
 
-            /* ── MAIN LAYOUT ──
-            Two equal columns side by side.
-            min-width prevents reflow on zoom — layout scales, not repositions */
-        .page{
-            display:grid;
-            grid-template-columns:1fr 1fr;         /* left = branding | right = form */
-            min-height:100vh;
-            min-width:1200px;                      /* locks layout, prevents reposition on zoom */
-            position:relative;
-        }
+                    /* ── MAIN LAYOUT ──
+                    Two equal columns side by side.
+                    min-width prevents reflow on zoom — layout scales, not repositions */
+                .page{
+                    display:grid;
+                    grid-template-columns:1fr 1fr;         /* left = branding | right = form */
+                    min-height:100vh;
+                    min-width:1200px;                      /* locks layout, prevents reposition on zoom */
+                    position:relative;
+                }
 
-        /* ── CENTER DIVIDER LINE ──
-        Vertical gradient line between left and right panels */
-        .divider{
-            position:absolute;
-            left:50%;
-            top:0;bottom:0;
-            width:0.5px;
-            background:linear-gradient(to bottom, transparent, var(--accent), transparent);
-            opacity:.4;
-        }
+                /* ── CENTER DIVIDER LINE ──
+                Vertical gradient line between left and right panels */
+                .divider{
+                    position:absolute;
+                    left:50%;
+                    top:0;bottom:0;
+                    width:0.5px;
+                    background:linear-gradient(to bottom, transparent, var(--accent), transparent);
+                    opacity:.4;
+                }
 
-        /* ════════════════════════
-        LEFT PANEL — Branding
-        ════════════════════════ */
-        .left{
-            padding:52px 64px;
-            display:flex;
-            flex-direction:column;
-            position:relative;
-            overflow:hidden;
-        }
+                /* ════════════════════════
+                LEFT PANEL — Branding
+                ════════════════════════ */
+                .left{
+                    padding:52px 64px;
+                    display:flex;
+                    flex-direction:column;
+                    position:relative;
+                    overflow:hidden;
+                }
 
 
-        .left-content{
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            flex:1;                        /* takes up available space, pushes stats down */
-        }
-        /* ── NOISE TEXTURE OVERLAY ──
-        Subtle grain on left panel for depth. Remove if you don't want it */
-        .noise{
-        position:absolute;inset:0;
-        opacity:.03;                           /* increase for more visible grain */
-        background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-        pointer-events:none;
-        }
+                .left-content{
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:center;
+                    flex:1;                        /* takes up available space, pushes stats down */
+                }
+                /* ── NOISE TEXTURE OVERLAY ──
+                Subtle grain on left panel for depth. Remove if you don't want it */
+                .noise{
+                position:absolute;inset:0;
+                opacity:.03;                           /* increase for more visible grain */
+                background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+                pointer-events:none;
+                }
 
-        /* ── LOGO ROW ── */
-        .logo-row{
-        display:flex;
-        align-items:center;
-        gap:12px;
-        margin-bottom:52px;                    /* space below logo before hero text */
-        }
-        .logo-box{
-        width:42px;height:42px;
-        border-radius:12px;                    /* roundness of logo box */
-        background:var(--accent);
-        display:flex;align-items:center;justify-content:center;
-        flex-shrink:0;
-        }
-        .logo-box svg{width:22px;height:22px}
-        .logo-name{
-        font-family:'Syne',sans-serif;
-        font-size:20px;font-weight:700;
-        letter-spacing:-.3px;
-        }
-        .logo-name span{color:var(--accent)}     /* the "r" in Linkr — colored accent */
-        .inspired{
-        font-size:11px;
-        color:var(--muted);
-        margin-top:2px;
-        }
+                /* ── LOGO ROW ── */
+                .logo-row{
+                display:flex;
+                align-items:center;
+                gap:12px;
+                margin-bottom:52px;                    /* space below logo before hero text */
+                }
+                .logo-box{
+                width:42px;height:42px;
+                border-radius:12px;                    /* roundness of logo box */
+                background:var(--accent);
+                display:flex;align-items:center;justify-content:center;
+                flex-shrink:0;
+                }
+                .logo-box svg{width:22px;height:22px}
+                .logo-name{
+                font-family:'Syne',sans-serif;
+                font-size:20px;font-weight:700;
+                letter-spacing:-.3px;
+                }
+                .logo-name span{color:var(--accent)}     /* the "r" in Linkr — colored accent */
+                .inspired{
+                font-size:11px;
+                color:var(--muted);
+                margin-top:2px;
+                }
 
-        /* ── HERO TEXT ── */
-        .hero{margin-bottom:36px}
-        .hero h1{
-        font-family:'Syne',sans-serif;
-        font-size:52px;                        /* change size of "Guess the Link!" */
-        font-weight:800;
-        line-height:1.05;
-        letter-spacing:-2px;
-        }
-        .hero h1 span{color:var(--accent)}      /* "Link!" colored in accent */
-        .hero .tagline{
-        font-size:14px;
-        color:var(--muted);
-        line-height:1.7;
-        max-width:340px;
-        margin-top:16px;
-        font-weight: 500;
-        }
+                /* ── HERO TEXT ── */
+                .hero{margin-bottom:36px}
+                .hero h1{
+                font-family:'Syne',sans-serif;
+                font-size:52px;                        /* change size of "Guess the Link!" */
+                font-weight:800;
+                line-height:1.05;
+                letter-spacing:-2px;
+                }
+                .hero h1 span{color:var(--accent)}      /* "Link!" colored in accent */
+                .hero .tagline{
+                font-size:14px;
+                color:var(--muted);
+                line-height:1.7;
+                max-width:340px;
+                margin-top:16px;
+                font-weight: 500;
+                }
 
-        /* ── EXAMPLE IMAGES ROW ── */
-        .images-row{
-        display:flex;
-        gap:10px;                              /* space between the 3 image cards */
-        margin-bottom:12px;
-        }
-        .img-card{
-        width:100px;height:100px;             /* change size of image thumbnails */
-        border-radius:14px;
-        overflow:hidden;
-        border:0.5px solid var(--border);
-        }
-        .img-card img{width:100%;height:100%;object-fit:cover}
-        /* placeholder shown when no real image is provided */
-        .img-placeholder{
-        width:100%;height:100%;
-        background:var(--card-bg);
-        display:flex;align-items:center;justify-content:center;
-        font-size:11px;color:var(--muted);
-        text-align:center;padding:8px;line-height:1.4;
-        }
+                /* ── EXAMPLE IMAGES ROW ── */
+                .images-row{
+                display:flex;
+                gap:10px;                              /* space between the 3 image cards */
+                margin-bottom:12px;
+                }
+                .img-card{
+                width:100px;height:100px;             /* change size of image thumbnails */
+                border-radius:14px;
+                overflow:hidden;
+                border:0.5px solid var(--border);
+                }
+                .img-card img{width:100%;height:100%;object-fit:cover}
+                /* placeholder shown when no real image is provided */
+                .img-placeholder{
+                width:100%;height:100%;
+                background:var(--card-bg);
+                display:flex;align-items:center;justify-content:center;
+                font-size:11px;color:var(--muted);
+                text-align:center;padding:8px;line-height:1.4;
+                }
 
-        /* ── IMAGE CAPTION ── */
-        .img-labels{font-size:12px;color:var(--muted);margin-bottom:14px}
-        .img-labels span{color:rgba(255,255,255,0.6)}
+                /* ── IMAGE CAPTION ── */
+                .img-labels{font-size:12px;color:var(--muted);margin-bottom:14px}
+                .img-labels span{color:rgba(255,255,255,0.6)}
 
-        /* ── ANSWER PILL ── 
-        The pill showing "Answer: Capital Cities" */
-        .answer-pill{
-            display:inline-flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:10px;
-            border:0.5px solid var(--accent);
-            border-radius:30px;
-            padding:10px 20px;
-            font-size:14px;color:var(--accent);font-weight:500;
-            width:100%;                              /* make pill full width */
-            margin-bottom:0;
-        }
-        .answer-pill .pill-text{
-            flex:1;
-            text-align:center;                       /* centers text regardless of scale */
-        }
-        .answer-pill .arrow{
-            width:24px;height:24px;
-            border-radius:50%;
-            background:var(--accent);
-            display:flex;align-items:center;justify-content:center;
-        }
-        .answer-pill .arrow svg{width:12px;height:12px}
-        .answer-pill strong{color:#fff}
+                /* ── ANSWER PILL ── 
+                The pill showing "Answer: Capital Cities" */
+                .answer-pill{
+                    display:inline-flex;
+                    align-items:center;
+                    justify-content:space-between;
+                    gap:10px;
+                    border:0.5px solid var(--accent);
+                    border-radius:30px;
+                    padding:10px 20px;
+                    font-size:14px;color:var(--accent);font-weight:500;
+                    width:100%;                              /* make pill full width */
+                    margin-bottom:0;
+                }
+                .answer-pill .pill-text{
+                    flex:1;
+                    text-align:center;                       /* centers text regardless of scale */
+                }
+                .answer-pill .arrow{
+                    width:24px;height:24px;
+                    border-radius:50%;
+                    background:var(--accent);
+                    display:flex;align-items:center;justify-content:center;
+                }
+                .answer-pill .arrow svg{width:12px;height:12px}
+                .answer-pill strong{color:#fff}
 
-        /* ── STATS ROW ── 
-        "50+ Levels", "3 Clues", "New" at the bottom of left panel */
-        .stats{
-            display:flex;
-            gap:40px;
-            margin-top:auto;        /* pushes stats to bottom */
-        }
+                /* ── STATS ROW ── 
+                "50+ Levels", "3 Clues", "New" at the bottom of left panel */
+                .stats{
+                    display:flex;
+                    gap:40px;
+                    margin-top:auto;        /* pushes stats to bottom */
+                }
 
-        .stat .num{
-            font-family:'Syne',sans-serif;
-            font-size:28px;font-weight:800;
-            color:var(--accent);line-height:1;
-        }
-        .stat .label{font-size:12px;color:var(--muted);margin-top:4px}
+                .stat .num{
+                    font-family:'Syne',sans-serif;
+                    font-size:28px;font-weight:800;
+                    color:var(--accent);line-height:1;
+                }
+                .stat .label{font-size:12px;color:var(--muted);margin-top:4px}
 
-        /* ════════════════════════
-            RIGHT PANEL — Login Form
-        ════════════════════════ */
-        .right{
-            padding:52px 72px;                     /* inner spacing — wider than left for form readability */
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            background:rgba(0,0,0,0.2);           /* slight darkening vs left panel */
-        }
+                /* ════════════════════════
+                    RIGHT PANEL — Login Form
+                ════════════════════════ */
+                .right{
+                    padding:52px 72px;                     /* inner spacing — wider than left for form readability */
+                    display:flex;
+                    flex-direction:column;
+                    justify-content:center;
+                    background:rgba(0,0,0,0.2);           /* slight darkening vs left panel */
+                }
 
-        /* ── WELCOME HEADING ── */
-        .welcome h2{
-            font-family:'Syne',sans-serif;
-            font-size:44px;font-weight:800;
-            letter-spacing:-1.5px;line-height:1.1;
-            margin-bottom:8px;
-        }
-        .welcome h2 span{color:var(--accent)}   /* "Back!" in accent color */
-        .welcome p{font-size:14px;color:var(--muted);margin-bottom:44px}
+                /* ── WELCOME HEADING ── */
+                .welcome h2{
+                    font-family:'Syne',sans-serif;
+                    font-size:44px;font-weight:800;
+                    letter-spacing:-1.5px;line-height:1.1;
+                    margin-bottom:8px;
+                }
+                .welcome h2 span{color:var(--accent)}   /* "Back!" in accent color */
+                .welcome p{font-size:14px;color:var(--muted);margin-bottom:44px}
 
-        /* ── INPUT FIELDS ── */
-        .field{margin-bottom:20px}              /* space between Username and Password fields */
-        .field-label{
-            font-size:11px;font-weight:500;
-            letter-spacing:.1em;text-transform:uppercase;
-            color:var(--muted);margin-bottom:8px;
-        }
-        .field input{
-            width:100%;
-            background:var(--input-bg);
-            border:0.5px solid var(--border);
-            border-radius:12px;
-            padding:16px 18px;                    /* increase for taller input fields */
-            font-size:15px;color:#fff;
-            outline:none;
-            font-family:'DM Sans',sans-serif;
-            transition:border-color .2s;
-        }
-        .field input::placeholder{color:rgba(255,255,255,0.2)}
-        .field input:focus{border-color:var(--accent)}  /* accent glow on focus */
+                /* ── INPUT FIELDS ── */
+                .field{margin-bottom:20px}              /* space between Username and Password fields */
+                .field-label{
+                    font-size:11px;font-weight:500;
+                    letter-spacing:.1em;text-transform:uppercase;
+                    color:var(--muted);margin-bottom:8px;
+                }
+                .field input{
+                    width:100%;
+                    background:var(--input-bg);
+                    border:0.5px solid var(--border);
+                    border-radius:12px;
+                    padding:16px 18px;                    /* increase for taller input fields */
+                    font-size:15px;color:#fff;
+                    outline:none;
+                    font-family:'DM Sans',sans-serif;
+                    transition:border-color .2s;
+                }
+                .field input::placeholder{color:rgba(255,255,255,0.2)}
+                .field input:focus{border-color:var(--accent)}  /* accent glow on focus */
 
-        /* ── START PLAYING BUTTON ──
-        Glass hover effect using ::before pseudo-element */
-        .play-btn{
-            width:100%;
-            background:var(--card-bg);
-            border:0.5px solid var(--border);
-            border-radius:12px;
-            padding:16px;
-            font-size:15px;font-weight:500;color:#fff;
-            cursor:pointer;
-            font-family:'Syne',sans-serif;
-            letter-spacing:.02em;
-            margin-top:8px;margin-bottom:20px;
-            position:relative;overflow:hidden;
-            transition:all .3s;
-        }
-        /* glass layer — invisible by default, appears on hover */
-        .play-btn::before{
-            content:'';
-            position:absolute;inset:0;
-            background:rgba(255,255,255,0.04);
-            backdrop-filter:blur(10px);           /* the actual glass blur effect */
-            opacity:0;
-            transition:opacity .3s;
-        }
-        .play-btn:hover::before{opacity:1}      /* fade in glass on hover */
-        .play-btn:hover{
-            border-color:var(--accent);
-            color:var(--accent2);
-            box-shadow:0 0 24px rgba(204,34,102,0.2);  /* glow on hover */
-        }
-        .play-btn .btn-inner{
-            position:relative;z-index:1;          /* keeps text above the glass layer */
-            display:flex;align-items:center;justify-content:center;gap:8px;
-        }
+                /* ── START PLAYING BUTTON ──
+                Glass hover effect using ::before pseudo-element */
+                .play-btn{
+                    width:100%;
+                    background:var(--card-bg);
+                    border:0.5px solid var(--border);
+                    border-radius:12px;
+                    padding:16px;
+                    font-size:15px;font-weight:500;color:#fff;
+                    cursor:pointer;
+                    font-family:'Syne',sans-serif;
+                    letter-spacing:.02em;
+                    margin-top:8px;margin-bottom:20px;
+                    position:relative;overflow:hidden;
+                    transition:all .3s;
+                }
+                /* glass layer — invisible by default, appears on hover */
+                .play-btn::before{
+                    content:'';
+                    position:absolute;inset:0;
+                    background:rgba(255,255,255,0.04);
+                    backdrop-filter:blur(10px);           /* the actual glass blur effect */
+                    opacity:0;
+                    transition:opacity .3s;
+                }
+                .play-btn:hover::before{opacity:1}      /* fade in glass on hover */
+                .play-btn:hover{
+                    border-color:var(--accent);
+                    color:var(--accent2);
+                    box-shadow:0 0 24px rgba(204,34,102,0.2);  /* glow on hover */
+                }
+                .play-btn .btn-inner{
+                    position:relative;z-index:1;          /* keeps text above the glass layer */
+                    display:flex;align-items:center;justify-content:center;gap:8px;
+                }
 
-        /* ── OR DIVIDER ── */
-        .divider-row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
-        .divider-line{flex:1;height:0.5px;background:var(--border)}
-        .divider-text{font-size:12px;color:var(--muted)}
+                /* ── OR DIVIDER ── */
+                .divider-row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+                .divider-line{flex:1;height:0.5px;background:var(--border)}
+                .divider-text{font-size:12px;color:var(--muted)}
 
-        /* ── CONTINUE AS GUEST BUTTON ── */
-        .guest-btn{
-            width:100%;
-            background:transparent;
-            border:0.5px solid rgba(255,255,255,0.1);
-            border-radius:12px;
-            padding:15px;
-            font-size:14px;color:rgba(255,255,255,0.4);
-            cursor:pointer;
-            font-family:'DM Sans',sans-serif;
-            transition:all .3s;
-        }
-        .guest-btn:hover{
-            border-color:var(--border);
-            color:var(--muted);
-            background:rgba(255,255,255,0.03);
-            backdrop-filter:blur(8px);
-        }
-        </style>
+                /* ── CONTINUE AS GUEST BUTTON ── */
+                .guest-btn{
+                    width:100%;
+                    background:transparent;
+                    border:0.5px solid rgba(255,255,255,0.1);
+                    border-radius:12px;
+                    padding:15px;
+                    font-size:14px;color:rgba(255,255,255,0.4);
+                    cursor:pointer;
+                    font-family:'DM Sans',sans-serif;
+                    transition:all .3s;
+                }
+                .guest-btn:hover{
+                    border-color:var(--border);
+                    color:var(--muted);
+                    background:rgba(255,255,255,0.03);
+                    backdrop-filter:blur(8px);
+                }
+            </style>
     </head>
 
     <body>
@@ -344,7 +346,7 @@
                 <div class="logo-name">Link<span>r</span></div>
                 <div class="inspired">Inspired by MoreSidemen</div>
             </div>
-                
+
         </div>
 
             <!-- Center content — vertically centered -->
