@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1200">
+  <title>Linkr — Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+
+    
+    *{
+      box-sizing:border-box;margin:0
+      ;padding:0
+    }
+
+    body{background:#0d0007;
+        font-family:'Inter',sans-serif;
+        color:#fff;
+        height:100vh;
+        overflow:hidden;
+        position:relative;
+    }
+
+    .cloud{
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+        z-index:0;
+        overflow:hidden
+    }
+    .w{
+        position:absolute;
+        font-family:'Inter',sans-serif;
+        font-weight:800;
+        text-transform:uppercase;
+        color:rgba(180,20,80,0.18);
+        white-space:nowrap
+    }
+
+    /* HEADER */
+    .header{
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+        z-index:10;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:16px 40px;
+        background:rgba(10,0,6,0.75);
+        backdrop-filter:blur(16px);
+        border-bottom:0.5px solid rgba(204,34,102,0.15)
+    }
+
+    .logo{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        cursor:pointer
+    }
+
+    .logo-box{
+        width:34px;
+        height:34px;
+        border-radius:9px;
+        background:#cc2266;
+        display:flex;
+        align-items:center;
+        justify-content:center
+    }
+
+    .logo-box svg{
+        width:17px;
+        height:17px
+    }
+    .logo-name{
+        font-family:'Inter',sans-serif;
+        font-size:17px;
+        font-weight:800
+    }
+
+    .logo-name em{
+        color:#cc2266;
+        font-style:normal
+    }
+
+    .nav{
+        display:flex;
+        align-items:center;
+        gap:32px
+    }
+
+    .level-badge{
+        background:#cc2266;
+        border-radius:20px;
+        padding:6px 14px;
+        font-size:13px;
+        font-weight:600;
+        display:flex;
+        align-items:center;
+        gap:6px
+    }
+    
+    .nav-link{
+        font-size:13px;
+        color:rgba(255,255,255,0.5);
+        cursor:pointer;
+        transition:color .2s
+    }
+
+    .nav-link:hover{
+        color:#fff
+    }
+    .profile-btn{
+        width:34px;
+        height:34px;
+        border-radius:50%;
+        border:0.5px solid rgba(204,34,102,0.4);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+        color:rgba(255,255,255,0.5)
+    }
+
+    /* MAIN */
+    .main{
+        position:absolute;
+        inset:0;
+        z-index:5;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:20px;
+        padding:70px 24px 24px
+    }
+
+    /* LEVEL BUBBLE */
+    .level-bubble{
+        width:52px;
+        height:52px;
+        border-radius:50%;
+        background:#cc2266;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-family:'Inter',sans-serif;
+        font-size:22px;
+        font-weight:800;
+        box-shadow:0 0 24px rgba(204,34,102,0.5);
+        margin-bottom:-12px;
+        z-index:2;
+        position:relative
+    }
+
+    /* CARD */
+    .card{background:rgba(18,0,9,0.9);border:0.5px solid rgba(204,34,102,0.2);border-radius:20px;padding:24px;backdrop-filter:blur(24px);width:100%;max-width:500px}
+    .imgs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+    .slot{aspect-ratio:1;border-radius:12px;overflow:hidden;background:rgba(204,34,102,0.07);border:0.5px solid rgba(204,34,102,0.15);display:flex;align-items:center;justify-content:center}
+    .slot img{width:100%;height:100%;object-fit:cover}
+    .slot-emoji{font-size:36px}
+    .card-label{text-align:center;font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:.12em;text-transform:uppercase}
+
+    /* BUTTONS */
+    .btns{display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px}
+    .btn-daily{width:100%;background:linear-gradient(135deg,#ff2277,#cc0055);border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(255,34,119,0.3);transition:all .2s}
+    .btn-daily:hover{box-shadow:0 4px 28px rgba(255,34,119,0.5);transform:translateY(-1px)}
+    .btn-play,.btn-lb{width:100%;background:rgba(255,255,255,0.04);border:0.5px solid rgba(204,34,102,0.2);border-radius:12px;padding:13px;font-size:14px;color:rgba(255,255,255,0.6);cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;backdrop-filter:blur(8px)}
+    .btn-play:hover,.btn-lb:hover{background:rgba(204,34,102,0.1);color:#fff;border-color:rgba(204,34,102,0.4)}
+  </style>
+</head>
+<body>
+
+<div class="cloud" id="cl"></div>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-box">
+      <svg viewBox="0 0 17 17" fill="none">
+        <circle cx="5" cy="8.5" r="2.8" fill="#fff" opacity=".9"/>
+        <circle cx="12.5" cy="4.5" r="2.8" fill="#fff" opacity=".6"/>
+        <circle cx="12.5" cy="12.5" r="2.8" fill="#fff" opacity=".6"/>
+        <line x1="7.5" y1="7" x2="10" y2="5.5" stroke="#fff" stroke-width="1" opacity=".4"/>
+        <line x1="7.5" y1="10" x2="10" y2="11.5" stroke="#fff" stroke-width="1" opacity=".4"/>
+      </svg>
+    </div>
+    <div class="logo-name">Link<em>r</em></div>
+  </div>
+  <div class="nav">
+    <!-- th:text injects player's current level from Spring -->
+    <div class="level-badge">Level <span th:text="${player.currentLevel}">1</span> 🔥</div>
+    <div class="nav-link">About</div>
+    <div class="nav-link">Tutorial</div>
+    <div class="profile-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- current level number from Spring -->
+  <div class="level-bubble" th:text="${player.currentLevel}">2</div>
+
+  <div class="card">
+    <div class="imgs" th:if="${question != null}">
+    <div class="slot"><img th:src="${question.imageOne}" alt="img"></div>
+    <div class="slot"><img th:src="${question.imageTwo}" alt="img"></div>
+    <div class="slot"><img th:src="${question.imageThree}" alt="img"></div>
+</div>
+<div class="imgs" th:if="${question == null}">
+    <div class="slot"><div class="slot-emoji">❓</div></div>
+    <div class="slot"><div class="slot-emoji">❓</div></div>
+    <div class="slot"><div class="slot-emoji">❓</div></div>
+</div>
+  </div>
+
+  <div class="btns">
+    <!-- Daily Challenge — goes to /game with daily mode -->
+    <form method="GET" th:action="@{/game}">
+      <button class="btn-daily" type="submit">Daily Challenge ↗</button>
+    </form>
+    <!-- Play — goes to /game normally -->
+    <form method="GET" th:action="@{/game}">
+      <button class="btn-play" type="submit">Play</button>
+    </form>
+    <!-- Leaderboards — goes to /leaderboard -->
+    <form method="GET" th:action="@{/leaderboard}">
+      <button class="btn-lb" type="submit">Leaderboards</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const words=['CAPITAL','CITIES','LINK','CONNECT','PUZZLE','THINK','DISCOVER','LATERAL','CLUE','GUESS','PATTERN','BRAIN','CHALLENGE','WORDPLAY','LOGIC','RIDDLE','SOLVE','IDEA','INSPIRE','DECODE','HIDDEN','MEANING','TRIVIA','CLEVER','CURIOUS','VISUAL','CULTURE','WIT','SHARP','UNCOVER','CREATIVE','INNOVATION','FOCUS','NETWORK','DESIGN'];
+const cl=document.getElementById('cl');
+const items=[];
+words.forEach(w=>{
+  const el=document.createElement('div');
+  el.className='w';
+  el.style.fontSize=(16+Math.random()*44)+'px';
+  el.textContent=w;
+  const x=Math.random()*90,y=Math.random()*90;
+  el.style.left=x+'%';el.style.top=y+'%';
+  el.style.opacity=(0.06+Math.random()*0.12).toString();
+  cl.appendChild(el);
+  items.push({el,x,y,vx:(Math.random()-.5)*0.014,vy:(Math.random()-.5)*0.014});
+});
+(function tick(){
+  items.forEach(i=>{
+    i.x+=i.vx;i.y+=i.vy;
+    if(i.x<-15)i.x=105;if(i.x>105)i.x=-15;
+    if(i.y<-5)i.y=102;if(i.y>102)i.y=-5;
+    i.el.style.left=i.x+'%';i.el.style.top=i.y+'%';
+  });
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

@@ -45,7 +45,7 @@ public class GameController {
         }
 
         session.setAttribute("playerId", player.getId());
-        return "redirect:/game";
+        return "redirect:/home.html";
 
     }
     
@@ -100,6 +100,24 @@ public class GameController {
         return "redirect:/game";
     }
 
+
+    @GetMapping("/home")
+    public String showHome(HttpSession session, Model model) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        Player player = playerService.getPlayerId(playerId);
+        Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
+        model.addAttribute("player", player);
+        model.addAttribute("question", question);
+        return "home";
+    }
+
+    @PostMapping("/guest")
+    public String handleGuest(HttpSession session) {
+        Player guest = new Player("Guest", 0L, 1);
+        playerService.savePlayer(guest);
+        session.setAttribute("playerId", guest.getId());
+        return "redirect:/home";
+    }
     
 }
 
