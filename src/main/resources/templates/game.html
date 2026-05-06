@@ -371,6 +371,49 @@
     });
     requestAnimationFrame(tick);
     })();
+
+    let submitted = false; // add this with your other variables
+
+    function submitGuess() {
+    if (submitted) return; // block spam
+    
+    const val = document.getElementById('guess-field').value.trim().toLowerCase();
+    if (!val) return;
+    tries++;
+    const dots = document.querySelectorAll('.dot');
+    if (tries <= 10) dots[tries-1].classList.add('used');
+    document.getElementById('tries-label').textContent = tries + '/10 Tries';
+
+    if (val === correctAnswer) {
+        submitted = true; // lock submissions
+        const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
+        coins += earned;
+        document.getElementById('coin-count').textContent = coins;
+        updateCoinColors();
+        showMsg('✓ Correct! +' + earned + ' coins — Next level in 2s...', 'rgba(100,255,150,0.9)');
+        document.getElementById('guess-field').disabled = true;
+        document.querySelector('.submit-btn').disabled = true;
+
+        // submit to Spring then redirect
+        setTimeout(() => {
+        fetch('/next', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'} })
+            .then(() => window.location.href = '/game');
+        }, 2000);
+
+    } else if (tries >= 10) {
+        submitted = true;
+        document.getElementById('guess-field').disabled = true;
+        document.querySelector('.submit-btn').disabled = true;
+        showMsg('Out of tries! Moving on...', '#ff4444');
+        setTimeout(() => {
+        fetch('/next', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'} })
+            .then(() => window.location.href = '/game');
+        }, 2000);
+    } else {
+        showMsg('Wrong! Try again.', '#ff4444');
+        document.getElementById('guess-field').value = '';
+    }
+    }
 </script>
 
 </body>
