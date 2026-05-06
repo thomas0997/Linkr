@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1200">
+  <title>Linkr — Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;height:100vh;overflow:hidden;position:relative}
+    .cloud{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+    .w{position:absolute;font-family:'Inter',sans-serif;font-weight:800;text-transform:uppercase;color:rgba(180,20,80,0.1);white-space:nowrap}
+
+    /* ── HEADER ── */
+    .header{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;background:rgba(10,0,6,0.8);backdrop-filter:blur(16px);border-bottom:0.5px solid rgba(204,34,102,0.15)}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo-box{width:30px;height:30px;border-radius:8px;background:#cc2266;display:flex;align-items:center;justify-content:center}
+    .logo-box svg{width:15px;height:15px}
+    .logo-name{font-family:'Inter',sans-serif;font-size:16px;font-weight:800}
+    .logo-name em{color:#cc2266;font-style:normal}
+    .header-center{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.1em;text-transform:uppercase}
+    .header-right{display:flex;align-items:center;gap:20px}
+    .coin-badge{display:flex;align-items:center;gap:6px;background:rgba(204,34,102,0.12);border:0.5px solid rgba(204,34,102,0.3);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
+    .nav-link{font-size:13px;color:rgba(255,255,255,0.45);cursor:pointer}
+    .nav-link:hover{color:#fff}
+    .profile-btn{width:30px;height:30px;border-radius:50%;border:0.5px solid rgba(204,34,102,0.4);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5)}
+
+    /* ── MAIN ── */
+    .main{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:68px 24px 20px}
+
+    /* ── LEVEL PILL ── */
+    .level-pill{background:#ff2277;border-radius:20px;padding:6px 20px;font-family:'Inter',sans-serif;font-size:13px;font-weight:800;letter-spacing:.05em}
+
+    /* ── IMAGES ── */
+    .imgs{display:flex;gap:12px}
+    .slot{width:130px;height:130px;border-radius:16px;overflow:hidden;background:rgba(204,34,102,0.07);border:0.5px solid rgba(204,34,102,0.2);display:flex;align-items:center;justify-content:center;font-size:44px}
+    .slot img{width:100%;height:100%;object-fit:cover}
+
+    /* ── CLUE DISPLAY ── */
+    .clue-display{width:100%;max-width:500px;background:rgba(204,34,102,0.06);border:0.5px solid rgba(204,34,102,0.2);border-radius:10px;padding:11px 16px;font-size:13px;color:rgba(255,255,255,0.3);font-style:italic}
+    .clue-display.active{color:rgba(255,255,255,0.75);font-style:normal;background:rgba(204,34,102,0.1)}
+
+    /* ── GUESS PANEL ── */
+    .panel{background:rgba(18,0,9,0.88);border:0.5px solid rgba(204,34,102,0.2);border-radius:16px;padding:20px;backdrop-filter:blur(24px);width:100%;max-width:500px}
+    .panel-label{font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+    .guess-input{width:100%;background:rgba(204,34,102,0.06);border:0.5px solid rgba(204,34,102,0.25);border-radius:8px;padding:11px 14px;font-size:14px;color:#fff;outline:none;font-family:'Inter',sans-serif;margin-bottom:10px}
+    .guess-input::placeholder{color:rgba(255,255,255,0.2)}
+    .guess-input:focus{border-color:#cc2266}
+    .submit-btn{width:100%;background:linear-gradient(135deg,#ff2277,#cc0055);border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+    .submit-btn:hover{box-shadow:0 4px 20px rgba(255,34,119,0.4)}
+    .tries-row{display:flex;align-items:center;justify-content:center;gap:5px;margin:10px 0 4px}
+    .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.1);transition:background .2s}
+    .dot.used{background:#cc2266;border-color:#cc2266}
+    .tries-label{text-align:center;font-size:11px;color:rgba(255,255,255,0.25);margin-bottom:12px}
+    .wrong-msg{text-align:center;font-size:12px;min-height:14px;margin-bottom:8px}
+
+    /* ── CLUE BUTTONS ── */
+    .clue-row{display:flex;gap:8px;width:100%;max-width:500px}
+    .clue-btn{flex:1;background:rgba(255,255,255,0.04);border:0.5px solid rgba(204,34,102,0.2);border-radius:8px;padding:9px 8px;font-size:12px;color:rgba(255,255,255,0.6);cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+    .clue-btn:hover:not(.disabled){background:rgba(204,34,102,0.1);border-color:rgba(204,34,102,0.4)}
+    .clue-btn.disabled{opacity:.4;cursor:not-allowed}
+    .clue-cost{font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;border-left:0.5px solid rgba(255,255,255,0.1);margin-left:2px}
+    .clue-cost.affordable{color:#fff}             /* enough coins — white */
+    .clue-cost.too-expensive{color:#ff4444}       /* not enough — red */
+  </style>
+</head>
+<body>
+
+<div class="cloud" id="cl"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-box">
+      <svg viewBox="0 0 15 15" fill="none">
+        <circle cx="4" cy="7.5" r="2.5" fill="#fff" opacity=".9"/>
+        <circle cx="11" cy="4" r="2.5" fill="#fff" opacity=".6"/>
+        <circle cx="11" cy="11" r="2.5" fill="#fff" opacity=".6"/>
+        <line x1="6.3" y1="6.1" x2="8.8" y2="4.9" stroke="#fff" stroke-width=".9" opacity=".4"/>
+        <line x1="6.3" y1="8.9" x2="8.8" y2="10.1" stroke="#fff" stroke-width=".9" opacity=".4"/>
+      </svg>
+    </div>
+    <div class="logo-name">Link<em>r</em></div>
+  </div>
+
+  <!-- th:text injects level number from Spring -->
+  <div class="header-center">Level <span th:text="${player.currentLevel}">1</span> — Find the Link!</div>
+
+  <div class="header-right">
+    <!-- th:text injects coin count from Spring -->
+    <div class="coin-badge">
+      <span th:text="${player.coins}" id="coin-count">0</span> Coins 🪙
+    </div>
+    <div class="nav-link">About</div>
+    <div class="nav-link">Tutorial</div>
+    <div class="profile-btn">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- Level pill — injected from Spring -->
+  <div class="level-pill">LEVEL <span th:text="${player.currentLevel}">1</span></div>
+
+  <!-- 3 question images — injected from Spring -->
+  <div class="imgs">
+    <div class="slot" th:if="${question != null}"><img th:src="${question.imageOne}" alt="Image 1"></div>
+    <div class="slot" th:if="${question != null}"><img th:src="${question.imageTwo}" alt="Image 2"></div>
+    <div class="slot" th:if="${question != null}"><img th:src="${question.imageThree}" alt="Image 3"></div>
+    <!-- fallback if no question in DB yet -->
+    <div class="slot" th:if="${question == null}">❓</div>
+    <div class="slot" th:if="${question == null}">❓</div>
+    <div class="slot" th:if="${question == null}">❓</div>
+  </div>
+
+  <!-- Clue reveal box -->
+  <div class="clue-display" id="clue-display">Use a clue to reveal a hint....</div>
+
+  <!-- Guess panel -->
+  <div class="panel">
+    <div class="panel-label">Your Guess</div>
+
+    <!-- Posts guess to /guess in GameController -->
+    <input class="guess-input" type="text" id="guess-field" placeholder="What's the link?" onkeydown="if(event.key==='Enter')submitGuess()">
+    <div class="wrong-msg" id="wrong-msg"></div>
+    <button class="submit-btn" onclick="submitGuess()">Submit ↗</button>
+
+    <!-- Try dots tracker -->
+    <div class="tries-row" id="tries-row">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="tries-label" id="tries-label">1/10 Tries</div>
+
+    <!-- Clue buttons -->
+    <div class="clue-row">
+      <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
+      <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
+      <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Clue texts injected from Spring via Thymeleaf — fallback for preview
+const clues = [
+  /*[[${question != null ? question.clueOne : 'Think: category'}]]*/ 'Think: places',
+  /*[[${question != null ? question.clueTwo : 'Narrow it down'}]]*/ 'These sound like city names',
+  /*[[${question != null ? question.clueThree : 'Almost there'}]]*/ 'Seoul, Brussels, Delhi'
+];
+const costs = [2, 4, 8];
+
+// Coin count from Spring — fallback 0 for preview
+let coins = /*[[${player != null ? player.coins : 0}]]*/ 0;
+let tries = 0;
+let clueUsed = -1;
+
+// correct answer from Spring — fallback for preview
+const correctAnswer = (/*[[${question != null ? question.answer : 'capital cities'}]]*/ 'capital cities').toLowerCase().trim();
+
+function updateCoinColors() {
+  [0,1,2].forEach(i => {
+    const el = document.getElementById('cc' + i);
+    el.className = 'clue-cost ' + (coins >= costs[i] ? 'affordable' : 'too-expensive');
+  });
+}
+
+function useClue(i) {
+  if (i > clueUsed + 1) return;
+  if (coins < costs[i]) {
+    showMsg('Not enough coins!', '#ff4444');
+    return;
+  }
+  coins -= costs[i];
+  clueUsed = i;
+  document.getElementById('coin-count').textContent = coins;
+  updateCoinColors();
+  const display = document.getElementById('clue-display');
+  display.textContent = clues[i];
+  display.classList.add('active');
+  document.getElementById('cb' + i).classList.add('disabled');
+}
+
+function submitGuess() {
+  const val = document.getElementById('guess-field').value.trim().toLowerCase();
+  if (!val) return;
+  tries++;
+  const dots = document.querySelectorAll('.dot');
+  if (tries <= 10) dots[tries-1].classList.add('used');
+  document.getElementById('tries-label').textContent = tries + '/10 Tries';
+
+  if (val === correctAnswer) {
+    const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
+    coins += earned;
+    document.getElementById('coin-count').textContent = coins;
+    updateCoinColors();
+    showMsg('✓ Correct! +' + earned + ' coins', 'rgba(100,255,150,0.9)');
+    // In production this submits to Spring — swap JS with form POST
+  } else if (tries >= 10) {
+    showMsg('Out of tries!', '#ff4444');
+  } else {
+    showMsg('Wrong! Try again.', '#ff4444');
+    document.getElementById('guess-field').value = '';
+  }
+}
+
+function showMsg(text, color) {
+  const el = document.getElementById('wrong-msg');
+  el.style.color = color;
+  el.textContent = text;
+}
+
+updateCoinColors();
+
+// Word cloud animation
+const words=['CAPITAL','CITIES','LINK','CONNECT','PUZZLE','CLUE','GUESS','BRAIN','LOGIC','RIDDLE','SOLVE','DECODE','HIDDEN','CLEVER','CURIOUS','VISUAL','WIT','SHARP','PATTERN','THINK','DISCOVER','LATERAL','MEANING'];
+const cl=document.getElementById('cl');
+const items=[];
+words.forEach(w=>{
+  const el=document.createElement('div');
+  el.className='w';
+  el.style.fontSize=(14+Math.random()*38)+'px';
+  el.textContent=w;
+  const x=Math.random()*90,y=Math.random()*90;
+  el.style.left=x+'%';el.style.top=y+'%';
+  el.style.opacity=(0.04+Math.random()*0.07).toString();
+  cl.appendChild(el);
+  items.push({el,x,y,vx:(Math.random()-.5)*0.012,vy:(Math.random()-.5)*0.012});
+});
+(function tick(){
+  items.forEach(i=>{
+    i.x+=i.vx;i.y+=i.vy;
+    if(i.x<-15)i.x=105;if(i.x>105)i.x=-15;
+    if(i.y<-5)i.y=102;if(i.y>102)i.y=-5;
+    i.el.style.left=i.x+'%';i.el.style.top=i.y+'%';
+  });
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

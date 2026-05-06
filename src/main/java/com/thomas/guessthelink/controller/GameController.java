@@ -45,24 +45,21 @@ public class GameController {
         }
 
         session.setAttribute("playerId", player.getId());
-        return "redirect:/home.html";
+        return "redirect:/home";
 
     }
     
     @GetMapping("/game")
-    public String showGame(Model model, HttpSession session){
+    public String showGame(Model model, HttpSession session) {
         Long playerId = (Long) session.getAttribute("playerId");
+        if (playerId == null) return "redirect:/";  // send back to login
+        
         Player player = playerService.getPlayerId(playerId);
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
-
-
-
-
         model.addAttribute("player", player);
         model.addAttribute("question", question);
         return "game";
     }
-
     @PostMapping("/guess")
     public String handleGuess(@RequestParam String guess, 
     @RequestParam int tries, HttpSession session, Model model){
@@ -100,17 +97,17 @@ public class GameController {
         return "redirect:/game";
     }
 
-
     @GetMapping("/home")
     public String showHome(HttpSession session, Model model) {
         Long playerId = (Long) session.getAttribute("playerId");
+        if (playerId == null) return "redirect:/";  // must be first
+
         Player player = playerService.getPlayerId(playerId);
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
         model.addAttribute("player", player);
         model.addAttribute("question", question);
         return "home";
     }
-
     @PostMapping("/guest")
     public String handleGuest(HttpSession session) {
         Player guest = new Player("Guest", 0L, 1);
