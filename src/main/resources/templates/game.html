@@ -1,3 +1,14 @@
+/* BUG FIX: After submitting a ghuess and text are shown, coins at the top page resets to 0 */
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
     <head>
@@ -256,7 +267,7 @@
         <div class="panel-label">Your Guess</div>
 
         <!-- Posts guess to /guess in GameController -->
-        <input class="guess-input" type="text" id="guess-field" placeholder="What's the link?" onkeydown="if(event.key==='Enter')submitGuess()">
+        <input class="guess-input" type="text" id="guess-field" placeholder="What's the link?: ******* ******" onkeydown="if(event.key==='Enter')submitGuess()">
         <div class="wrong-msg" id="wrong-msg"></div>
         <button class="submit-btn" onclick="submitGuess()">Submit ↗</button>
 
