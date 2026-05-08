@@ -91,8 +91,9 @@ public class GameController {
     }
 
     @PostMapping("/next")
-    public String nextLevel(HttpSession session){
-        Long playerId =  (Long) session.getAttribute("playerId");
+    public String nextLevel(HttpSession session, @RequestParam(defaultValue="0") int coinsEarned) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        if (coinsEarned > 0) playerService.addCoins(playerId, (long) coinsEarned);
         gameService.unlockNextLevel(playerId);
         return "redirect:/game";
     }
