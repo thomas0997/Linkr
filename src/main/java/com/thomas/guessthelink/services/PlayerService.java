@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.thomas.guessthelink.Player;
 import com.thomas.guessthelink.repository.PlayerRepository;
+import java.util.*;
 
 
 //
@@ -53,6 +54,12 @@ public class PlayerService {
     public Player findByUsername(String username) {
         return playerRepo.findByUsername(username);
     }
+    public List<Player> getLeaderboard() {
+
+    return playerRepo.findAllByOrderByCurrentLevelDesc();
+
+}
+
 
 
 }

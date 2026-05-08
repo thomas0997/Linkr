@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1200">
+  <title>Linkr — Leaderboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;min-height:100vh;overflow-y:auto;position:relative}
+    .cloud{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+    .w{position:absolute;font-family:'Inter',sans-serif;font-weight:800;text-transform:uppercase;color:rgba(180,20,80,0.08);white-space:nowrap}
+
+    /* ── HEADER ── */
+    .header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;background:rgba(10,0,6,0.8);backdrop-filter:blur(16px);border-bottom:0.5px solid rgba(204,34,102,0.15)}
+    .logo{display:flex;align-items:center;gap:10px;cursor:pointer;text-decoration:none;color:#fff}
+    .logo-box{width:30px;height:30px;border-radius:8px;background:#cc2266;display:flex;align-items:center;justify-content:center}
+    .logo-box svg{width:15px;height:15px}
+    .logo-name{font-family:'Inter',sans-serif;font-size:16px;font-weight:800}
+    .logo-name em{color:#cc2266;font-style:normal}
+    .header-right{display:flex;align-items:center;gap:20px}
+    .coin-badge{display:flex;align-items:center;gap:6px;background:rgba(204,34,102,0.12);border:0.5px solid rgba(204,34,102,0.3);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
+    .nav-link{font-size:13px;color:rgba(255,255,255,0.45);cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.45)}
+    .nav-link:hover{color:#fff}
+    .profile-btn{width:30px;height:30px;border-radius:50%;border:0.5px solid rgba(204,34,102,0.4);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);cursor:pointer}
+
+    /* ── MAIN ── */
+    .main{position:relative;z-index:5;padding:88px 40px 40px}
+
+    /* ── PODIUM ── */
+    .podium-section{display:flex;align-items:flex-end;justify-content:center;gap:0;margin:24px auto 20px;height:220px;max-width:700px}
+    .podium-item{display:flex;flex-direction:column;align-items:center;position:relative}
+    .podium-name{border-radius:14px;padding:12px 20px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;text-align:center;margin-bottom:8px;min-width:120px;position:relative;z-index:2}
+    .podium-level{font-size:11px;font-weight:400;opacity:.7;margin-top:3px}
+    .platform{width:200px;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-weight:800;font-size:28px;color:rgba(255,255,255,0.15);border-radius:4px 4px 0 0}
+    .rank-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-family:'Inter',sans-serif}
+
+    /* 1st */
+    .podium-item.first .podium-name{background:rgba(204,34,102,0.35);border:0.5px solid rgba(204,34,102,0.5)}
+    .podium-item.first .platform{height:130px;background:linear-gradient(180deg,rgba(204,34,102,0.2),rgba(204,34,102,0.05));border-top:2px solid rgba(204,34,102,0.4)}
+    .first .rank-badge{background:#cc2266;color:#fff}
+
+    /* 2nd */
+    .podium-item.second .podium-name{background:rgba(100,50,80,0.3);border:0.5px solid rgba(150,80,110,0.3)}
+    .podium-item.second .platform{height:90px;background:linear-gradient(180deg,rgba(100,50,80,0.2),rgba(100,50,80,0.05));border-top:2px solid rgba(150,80,110,0.3)}
+    .second .rank-badge{background:rgba(150,80,110,0.6);color:#fff}
+
+    /* 3rd */
+    .podium-item.third .podium-name{background:rgba(80,40,60,0.3);border:0.5px solid rgba(120,60,90,0.25)}
+    .podium-item.third .platform{height:60px;background:linear-gradient(180deg,rgba(80,40,60,0.2),rgba(80,40,60,0.05));border-top:2px solid rgba(120,60,90,0.25)}
+    .third .rank-badge{background:rgba(120,60,90,0.5);color:#fff}
+
+    /* ── YOUR RANK BANNER ── */
+    .rank-banner{background:rgba(204,34,102,0.1);border:0.5px solid rgba(204,34,102,0.25);border-radius:30px;padding:12px 32px;text-align:center;font-size:14px;color:rgba(255,255,255,0.7);margin:0 auto 24px;max-width:500px}
+    .rank-banner strong{color:#fff;font-weight:700}
+
+    /* ── TABLE ── */
+    .table-card{background:rgba(18,0,9,0.85);border:0.5px solid rgba(204,34,102,0.15);border-radius:16px;padding:24px;backdrop-filter:blur(20px);max-width:700px;margin:0 auto}
+    .table-header{display:flex;align-items:center;margin-bottom:20px}
+    .table-title{font-family:'Inter',sans-serif;font-size:13px;font-weight:800;letter-spacing:.1em;background:rgba(204,34,102,0.15);border:0.5px solid rgba(204,34,102,0.3);border-radius:8px;padding:6px 16px;color:rgba(255,255,255,0.8)}
+    .col-headers{display:grid;grid-template-columns:60px 1fr 100px;gap:12px;padding:0 12px;margin-bottom:10px}
+    .col-header{font-size:11px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:.08em}
+    .row{display:grid;grid-template-columns:60px 1fr 100px;gap:12px;align-items:center;background:rgba(204,34,102,0.07);border:0.5px solid rgba(204,34,102,0.12);border-radius:10px;padding:12px;margin-bottom:8px;transition:background .2s}
+    .row:hover{background:rgba(204,34,102,0.12)}
+    .row.you{border-color:rgba(204,34,102,0.4);background:rgba(204,34,102,0.15)}
+    .rank-num{font-family:'Inter',sans-serif;font-size:15px;font-weight:800;color:rgba(255,255,255,0.8)}
+    .rank-num.top{color:#cc2266}
+    .username{font-size:14px;color:rgba(255,255,255,0.8)}
+    .you-tag{color:rgba(204,34,102,0.7);font-size:11px;margin-left:6px}
+    .level-val{font-size:13px;color:rgba(255,255,255,0.5);text-align:right}
+  </style>
+</head>
+<body>
+
+<div class="cloud" id="cl"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <a class="logo" href="/home">
+    <div class="logo-box">
+      <svg viewBox="0 0 15 15" fill="none">
+        <circle cx="4" cy="7.5" r="2.5" fill="#fff" opacity=".9"/>
+        <circle cx="11" cy="4" r="2.5" fill="#fff" opacity=".6"/>
+        <circle cx="11" cy="11" r="2.5" fill="#fff" opacity=".6"/>
+        <line x1="6.3" y1="6.1" x2="8.8" y2="4.9" stroke="#fff" stroke-width=".9" opacity=".4"/>
+        <line x1="6.3" y1="8.9" x2="8.8" y2="10.1" stroke="#fff" stroke-width=".9" opacity=".4"/>
+      </svg>
+    </div>
+    <div class="logo-name">Link<em>r</em></div>
+  </a>
+  <div class="header-right">
+    <!-- coin count injected from Spring -->
+    <div class="coin-badge">
+      <span th:text="${player.coins}">0</span> Coins 🪙
+    </div>
+    <a class="nav-link" href="/about">About</a>
+    <a class="nav-link" href="/tutorial">Tutorial</a>
+    <div class="profile-btn">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- PODIUM — top 3 injected from Spring -->
+  <div class="podium-section">
+    <!-- 2nd place -->
+    <div class="podium-item second" th:if="${players.size() >= 2}">
+      <div class="podium-name">
+        <div class="rank-badge">2</div>
+        <span th:text="${players[1].username}">PlayerTwo</span>
+        <div class="podium-level">Level <span th:text="${players[1].currentLevel}">18</span></div>
+      </div>
+      <div class="platform"></div>
+    </div>
+    <!-- 1st place -->
+    <div class="podium-item first" th:if="${players.size() >= 1}">
+      <div class="podium-name">
+        <div class="rank-badge">1</div>
+        <span th:text="${players[0].username}">PlayerOne</span>
+        <div class="podium-level">Level <span th:text="${players[0].currentLevel}">24</span></div>
+      </div>
+      <div class="platform"></div>
+    </div>
+    <!-- 3rd place -->
+    <div class="podium-item third" th:if="${players.size() >= 3}">
+      <div class="podium-name">
+        <div class="rank-badge">3</div>
+        <span th:text="${players[2].username}">PlayerThree</span>
+        <div class="podium-level">Level <span th:text="${players[2].currentLevel}">15</span></div>
+      </div>
+      <div class="platform"></div>
+    </div>
+  </div>
+
+  <!-- YOUR RANK BANNER -->
+  <div class="rank-banner">
+    You placed <strong>#<span th:text="${playerRank}">12093</span></strong>
+    out of <strong><span th:text="${totalPlayers}">13011</span></strong> players!
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">TOP PLAYERS</div>
+    </div>
+    <div class="col-headers">
+      <span class="col-header">Rank</span>
+      <span class="col-header">Username</span>
+      <span class="col-header" style="text-align:right">Level</span>
+    </div>
+
+    <!-- Thymeleaf loop — injects all players from Spring -->
+    <div th:each="p, stat : ${players}"
+         th:class="${p.id == player.id} ? 'row you' : 'row'">
+      <div th:class="${stat.index < 3} ? 'rank-num top' : 'rank-num'"
+           th:text="${stat.count}">1</div>
+      <div class="username">
+        <span th:text="${p.username}">Username</span>
+        <span class="you-tag" th:if="${p.id == player.id}">(you)</span>
+      </div>
+      <div class="level-val" th:text="${p.currentLevel}">1</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const words=['LEADERBOARD','RANK','CHAMPION','TOP','SCORE','LEVEL','COMPETE','WIN','BEST','ACHIEVE','GLORY','FIRST','CROWN'];
+const cl=document.getElementById('cl');
+const items=[];
+words.forEach(w=>{
+  const el=document.createElement('div');
+  el.className='w';
+  el.style.fontSize=(16+Math.random()*40)+'px';
+  el.textContent=w;
+  const x=Math.random()*90,y=Math.random()*90;
+  el.style.left=x+'%';el.style.top=y+'%';
+  el.style.opacity=(0.04+Math.random()*0.07).toString();
+  cl.appendChild(el);
+  items.push({el,x,y,vx:(Math.random()-.5)*0.01,vy:(Math.random()-.5)*0.01});
+});
+(function tick(){
+  items.forEach(i=>{
+    i.x+=i.vx;i.y+=i.vy;
+    if(i.x<-15)i.x=105;if(i.x>105)i.x=-15;
+    if(i.y<-5)i.y=102;if(i.y>102)i.y=-5;
+    i.el.style.left=i.x+'%';i.el.style.top=i.y+'%';
+  });
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

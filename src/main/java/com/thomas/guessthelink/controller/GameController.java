@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 import com.thomas.guessthelink.*;
+import java.util.*;
 
 
 
@@ -115,6 +116,24 @@ public class GameController {
         playerService.savePlayer(guest);
         session.setAttribute("playerId", guest.getId());
         return "redirect:/home";
+    }
+
+    @GetMapping("/leaderboard")
+    public String showLeaderboard(HttpSession session, Model model) {
+
+        Long playerId = (Long) session.getAttribute("playerId");
+        if (playerId == null) return "redirect:/";
+        
+        Player player = playerService.getPlayerId(playerId);
+
+        List<Player> players = playerService.getLeaderboard();        
+        int playerRank = players.indexOf(player) + 1;
+
+        model.addAttribute("player", player);
+        model.addAttribute("players", players);
+        model.addAttribute("playerRank", playerRank);
+        model.addAttribute("totalPlayers", players.size());
+        return "leaderboard";
     }
     
 }
