@@ -10,7 +10,7 @@ import com.thomas.guessthelink.repository.*;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
-@RequestMapping("/admin")
+
 public class AdminController {
 
     @Autowired GeminiService geminiService;
