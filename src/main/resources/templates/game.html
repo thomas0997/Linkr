@@ -1,5 +1,6 @@
-/* BUG FIX: After submitting a ghuess and text are shown, coins at the top page resets to 0 */
-
+//BUGS FOUND:
+1. When it got the correct answer, it doesnt progress – which is good, but it also allows the user to repeat the same level over and over and accumulate points. I want it to give a pop-up of staytuned, then redirect to homepage instead.
+2. When I press the clues, nothing pop ups in the clues field
 
 
 
@@ -134,7 +135,18 @@
                 text-transform:uppercase
             }
             .header-right{display:flex;align-items:center;gap:20px}
-            .coin-badge{display:flex;align-items:center;gap:6px;background:rgba(204,34,102,0.12);border:0.5px solid rgba(204,34,102,0.3);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
+
+            .coin-badge{
+            display:flex;
+            align-items:center;        /* add this */
+            gap:6px;
+            background:rgba(204,34,102,0.12);
+            border:0.5px solid rgba(204,34,102,0.3);
+            border-radius:20px;
+            padding:5px 14px;
+            font-size:13px;
+            font-weight:600;
+            }
             .nav-link{font-size:13px;color:rgba(255,255,255,0.45);cursor:pointer}
             .nav-link:hover{color:#fff}
             .profile-btn{width:30px;height:30px;border-radius:50%;border:0.5px solid rgba(204,34,102,0.4);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5)}
@@ -150,6 +162,7 @@
                 justify-content:center;
                 gap:16px;
                 padding:68px 24px 20px
+                
             }
 
             /* ── LEVEL PILL ── */
@@ -288,7 +301,9 @@
 
     <!-- MAIN -->
     <div class="main">
-        <input type="hidden" id="player-coins" th:value="${player != null ? player.coins : 0}" value="0">
+    <input type="hidden" id="correct-answer" th:value="${question != null ? question.answer : ''}">
+    <input type="hidden" id="player-coins" th:value="${player != null ? player.coins : 0}" value="0">
+
 
 
     <!-- Level pill — injected from Spring -->
@@ -296,15 +311,19 @@
 
     <!-- 3 question images — injected from Spring -->
     <div class="imgs">
-        <div class="slot" th:if="${question != null}"><img th:src="${question.imageOne}" alt="Image 1"></div>
-        <div class="slot" th:if="${question != null}"><img th:src="${question.imageTwo}" alt="Image 2"></div>
-        <div class="slot" th:if="${question != null}"><img th:src="${question.imageThree}" alt="Image 3"></div>
-        <!-- fallback if no question in DB yet -->
-        <div class="slot" th:if="${question == null}">❓</div>
-        <div class="slot" th:if="${question == null}">❓</div>
-        <div class="slot" th:if="${question == null}">❓</div>
+    <div class="slot">
+        <img th:if="${question != null}" th:src="${question.imageOne}" alt="Image 1">
+        <span th:if="${question == null}">❓</span>
     </div>
-
+    <div class="slot">
+        <img th:if="${question != null}" th:src="${question.imageTwo}" alt="Image 2">
+        <span th:if="${question == null}">❓</span>
+    </div>
+    <div class="slot">
+        <img th:if="${question != null}" th:src="${question.imageThree}" alt="Image 3">
+        <span th:if="${question == null}">❓</span>
+    </div>
+    </div>
     <!-- Clue reveal box -->
     <div class="clue-display" id="clue-display">Use a clue to reveal a hint....</div>
 
@@ -313,7 +332,7 @@
         <div class="panel-label">Your Guess</div>
 
         <!-- Posts guess to /guess in GameController -->
-        <input class="guess-input" type="text" id="guess-field" placeholder="What's the link?: ******* ******" onkeydown="if(event.key==='Enter')submitGuess()">
+        <input class="guess-input" type="text" id="guess-field" placeholder="What's the link?: " onkeydown="if(event.key==='Enter')submitGuess()">
         <div class="wrong-msg" id="wrong-msg"></div>
         <button class="submit-btn" onclick="submitGuess()">Submit ↗</button>
 
@@ -334,22 +353,24 @@
 </div>
 
 <script>
-    // Clue texts injected from Spring via Thymeleaf — fallback for preview
     const clues = [
-    /*[[${question != null ? question.clueOne : 'Think: category'}]]*/ 'Think: places',
-    /*[[${question != null ? question.clueTwo : 'Narrow it down'}]]*/ 'These sound like city names',
-    /*[[${question != null ? question.clueThree : 'Almost there'}]]*/ 'Seoul, Brussels, Delhi'
+    /*[[${question != null ? question.clueOne : ''}]]*/ '',
+    /*[[${question != null ? question.clueTwo : ''}]]*/ '',
+    /*[[${question != null ? question.clueThree : ''}]]*/ ''
     ];
     const costs = [2, 4, 8];
 
-    // Coin count from Spring — fallback 0 for preview
+    const correctAnswer = document.getElementById('correct-answer').value.toLowerCase().trim();
     let coins = parseInt(document.getElementById('player-coins').value) || 0;
-
     let tries = 0;
     let clueUsed = -1;
+    let submitted = false;
 
-    // correct answer from Spring — fallback for preview
-    const correctAnswer = (/*[[${question != null ? question.answer : 'capital cities'}]]*/ 'capital cities').toLowerCase().trim();
+    // placeholder from answer length
+    if (correctAnswer) {
+    document.getElementById('guess-field').placeholder = 
+        correctAnswer.split(' ').map(w => '*'.repeat(w.length)).join(' ');
+    }
 
     function updateCoinColors() {
     [0,1,2].forEach(i => {
@@ -358,25 +379,29 @@
     });
     }
 
-    function useClue(i) {
-        if (i > clueUsed + 1) return;
-        if (document.getElementById('cb' + i).classList.contains('disabled')) return; // block re-click
-        if (coins < costs[i]) {
-            showMsg('Not enough coins!', '#ff4444');
-            return;
+
+    const params = new URLSearchParams(window.location.search);
+        if (params.get('noNextLevel') === 'true') {
+            alert('🎉 You finished all available levels! Stay tuned for more coming soon.');
         }
-        coins -= costs[i];
-        clueUsed = i;
-        document.getElementById('coin-count').textContent = coins;
-        updateCoinColors();
-        const display = document.getElementById('clue-display');
-        display.textContent = clues[i];
-        display.classList.add('active');
-        document.getElementById('cb' + i).classList.add('disabled');
-        document.getElementById('cb' + i).style.pointerEvents = 'none'; // hard block clicks
+
+    function useClue(i) {
+    if (i > clueUsed + 1) return;
+    if (document.getElementById('cb' + i).classList.contains('disabled')) return;
+    if (coins < costs[i]) { showMsg('Not enough coins!', '#ff4444'); return; }
+    coins -= costs[i];
+    clueUsed = i;
+    document.getElementById('coin-count').textContent = coins;
+    updateCoinColors();
+    const display = document.getElementById('clue-display');
+    display.textContent = clues[i];
+    display.classList.add('active');
+    document.getElementById('cb' + i).classList.add('disabled');
+    document.getElementById('cb' + i).style.pointerEvents = 'none';
     }
 
     function submitGuess() {
+    if (submitted) return;
     const val = document.getElementById('guess-field').value.trim().toLowerCase();
     if (!val) return;
     tries++;
@@ -385,15 +410,28 @@
     document.getElementById('tries-label').textContent = tries + '/10 Tries';
 
     if (val === correctAnswer) {
+        submitted = true;
         const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
         coins += earned;
         document.getElementById('coin-count').textContent = coins;
         updateCoinColors();
-            document.getElementById('coins-earned-display').textContent = '+' + earned + ' 🪙';
-            document.getElementById('correct-overlay').classList.add('show');
-        // In production this submits to Spring — swap JS with form POST
+        showCorrectAnimation(earned);
+        document.getElementById('guess-field').disabled = true;
+        document.querySelector('.submit-btn').disabled = true;
+        setTimeout(() => {
+        fetch('/next?coinsEarned=' + earned, {
+            method: 'POST',
+            headers: {'Content-Type':'application/x-www-form-urlencoded'}
+        }).then(() => window.location.href = '/game');
+        }, 2000);
+
     } else if (tries >= 10) {
-        showMsg('Out of tries!', '#ff4444');
+    submitted = true;
+    document.getElementById('guess-field').disabled = true;
+    document.querySelector('.submit-btn').disabled = true;
+    showMsg('Out of tries! The answer was: ' + correctAnswer, '#ff4444');
+    // no coins, no level progression — just show the answer
+
     } else {
         showMsg('Wrong! Try again.', '#ff4444');
         document.getElementById('guess-field').value = '';
@@ -406,10 +444,35 @@
     el.textContent = text;
     }
 
+    function showCorrectAnimation(earned) {
+    document.getElementById('coins-earned-display').textContent = '+' + earned + ' 🪙';
+    document.getElementById('correct-overlay').classList.add('show');
+    launchConfetti();
+    }
+
+    function launchConfetti() {
+    const colors = ['#ff2277','#cc0055','#fff','#ff88bb','#ffcc00'];
+    for (let i = 0; i < 60; i++) {
+        setTimeout(() => {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.top = '-10px';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.width = (6 + Math.random() * 10) + 'px';
+        piece.style.height = (6 + Math.random() * 10) + 'px';
+        piece.style.animationDuration = (1.2 + Math.random() * 1.2) + 's';
+        piece.style.animationDelay = (Math.random() * 0.5) + 's';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 2500);
+        }, i * 20);
+    }
+    }
+
     updateCoinColors();
 
-    // Word cloud animation
-    const words=['CAPITAL','CITIES','LINK','CONNECT','PUZZLE','CLUE','GUESS','BRAIN','LOGIC','RIDDLE','SOLVE','DECODE','HIDDEN','CLEVER','CURIOUS','VISUAL','WIT','SHARP','PATTERN','THINK','DISCOVER','LATERAL','MEANING'];
+    // word cloud
+    const words=['CAPITAL','CITIES','LINK','CONNECT','PUZZLE','CLUE','GUESS','BRAIN','LOGIC','RIDDLE','SOLVE','DECODE','HIDDEN','CLEVER','CURIOUS','VISUAL','WIT','SHARP','PATTERN','THINK'];
     const cl=document.getElementById('cl');
     const items=[];
     words.forEach(w=>{
@@ -431,80 +494,12 @@
         i.el.style.left=i.x+'%';i.el.style.top=i.y+'%';
     });
     requestAnimationFrame(tick);
-    })();
-
-    let submitted = false; // add this with your other variables
-
-    function submitGuess() {
-    if (submitted) return; // block spam
+    })();   
     
-    const val = document.getElementById('guess-field').value.trim().toLowerCase();
-    if (!val) return;
-    tries++;
-    const dots = document.querySelectorAll('.dot');
-    if (tries <= 10) dots[tries-1].classList.add('used');
-    document.getElementById('tries-label').textContent = tries + '/10 Tries';
-
-    if (val === correctAnswer) {
-        submitted = true; // lock submissions
-        const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
-        coins += earned;
-        document.getElementById('coin-count').textContent = coins;
-        updateCoinColors();
-
-        showCorrectAnimation(earned);
-        document.getElementById('guess-field').disabled = true;
-        document.querySelector('.submit-btn').disabled = true;
-
-        // submit to Spring then redirect
-        setTimeout(() => {
-        const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
-        fetch('/next?coinsEarned=' + earned, { 
-            method: 'POST', 
-            headers: {'Content-Type':'application/x-www-form-urlencoded'} 
-        }).then(() => window.location.href = '/game');
-        }, 2000);
-        
-    } else if (tries >= 10) {
-        submitted = true;
-        document.getElementById('guess-field').disabled = true;
-        document.querySelector('.submit-btn').disabled = true;
-        showMsg('Out of tries! Moving on...', '#ff4444');
-        setTimeout(() => {
-        fetch('/next', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'} })
-            .then(() => window.location.href = '/game');
-        }, 2000);
-    } else {
-        showMsg('Wrong! Try again.', '#ff4444');
-        document.getElementById('guess-field').value = '';
-    }
-
-    function showCorrectAnimation(earned) {
-        document.getElementById('coins-earned-display').textContent = '+' + earned + ' 🪙';
-        document.getElementById('correct-overlay').classList.add('show');
-        launchConfetti();
-        }
-
-        function launchConfetti() {
-        const colors = ['#ff2277','#cc0055','#fff','#ff88bb','#ffcc00'];
-        for (let i = 0; i < 60; i++) {
-            setTimeout(() => {
-            const piece = document.createElement('div');
-            piece.className = 'confetti-piece';
-            piece.style.left = Math.random() * 100 + 'vw';
-            piece.style.top = '-10px';
-            piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-            piece.style.width = (6 + Math.random() * 10) + 'px';
-            piece.style.height = (6 + Math.random() * 10) + 'px';
-            piece.style.animationDuration = (1.2 + Math.random() * 1.2) + 's';
-            piece.style.animationDelay = (Math.random() * 0.5) + 's';
-            document.body.appendChild(piece);
-            setTimeout(() => piece.remove(), 2500);
-            }, i * 20);
-        }
-        }
-    }
-    
+    history.pushState(null, null, location.href);
+    window.onpopstate = function () {
+    history.pushState(null, null, location.href);
+    };
 </script>
 
         <!-- Add before closing body tag -->
@@ -516,5 +511,7 @@
         <p>Next level in 2 seconds...</p>
     </div>
 </div>
+
+
 </body>
 </html>

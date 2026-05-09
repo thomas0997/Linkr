@@ -43,20 +43,25 @@ public class GameController {
             player = new Player(username, 0L, 1);
             playerService.savePlayer(player);
 
+            
+        }
+        if (!username.matches("[a-zA-Z0-9_]{3,20}")) {
+            return "redirect:/?error=invalid_username";
         }
 
         session.setAttribute("playerId", player.getId());
         return "redirect:/home";
 
     }
-    
     @GetMapping("/game")
     public String showGame(Model model, HttpSession session) {
         Long playerId = (Long) session.getAttribute("playerId");
-        if (playerId == null) return "redirect:/";  // send back to login
-        
+        if (playerId == null) return "redirect:/";
+
         Player player = playerService.getPlayerId(playerId);
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
+        
+        // prevent accessing levels beyond current
         model.addAttribute("player", player);
         model.addAttribute("question", question);
         return "game";
@@ -92,8 +97,19 @@ public class GameController {
     }
 
     @PostMapping("/next")
-    public String nextLevel(HttpSession session, @RequestParam(defaultValue="0") int coinsEarned) {
+    public String nextLevel(HttpSession session, @RequestParam(defaultValue="0") int coinsEarned, Model model) {
         Long playerId = (Long) session.getAttribute("playerId");
+        Player player = playerService.getPlayerId(playerId);
+        
+        int nextLevel = player.getCurrentLevel() + 1;
+        Question nextQuestion = questionService.getQuestionByLevel(nextLevel);
+        
+        if (nextQuestion == null) {
+            // no next level — stay, show message
+            if (coinsEarned > 0) playerService.addCoins(playerId, (long) coinsEarned);
+            return "redirect:/game?noNextLevel=true";
+        }
+        
         if (coinsEarned > 0) playerService.addCoins(playerId, (long) coinsEarned);
         gameService.unlockNextLevel(playerId);
         return "redirect:/game";

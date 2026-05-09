@@ -34,6 +34,8 @@ public class Question {
     public String getClueOne(){ return clueOne; }
     public String getClueTwo(){ return clueTwo; }
     public String getClueThree(){ return clueThree; }
+    public String getImageOne(){ return imageOne; }
+    public String getImageTwo(){ return imageTwo; }
     public String getImageThree(){ return imageThree; }
     public String getAnswer(){ return answer; }
     public int getLevelNumber(){ return levelNumber; }

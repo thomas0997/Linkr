@@ -7,6 +7,7 @@ public class GeneratedQuestion {
     private String clue1, clue2, clue3;
     private int levelNumber;
 
+    
     public GeneratedQuestion() {}
 
     public GeneratedQuestion(String answer, 

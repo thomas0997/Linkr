@@ -26,31 +26,47 @@ public class AdminController {
 
 
     // Generate a question from Gemini + Unsplash
-    @PostMapping("/generate")
+    @PostMapping("/admin/generate")
     public String generateQuestion(Model model) {
-        try {
-            GeneratedQuestion q = geminiService.generateQuestion();
+    try {
+        GeneratedQuestion q = geminiService.generateQuestion();
 
-            // fetch real images from Unsplash
-            String img1 = unsplashService.getImageUrl(q.getImageKeyword1());
-            String img2 = unsplashService.getImageUrl(q.getImageKeyword2());
-            String img3 = unsplashService.getImageUrl(q.getImageKeyword3());
+        // DEBUG — print Gemini output to terminal
+        System.out.println("=== GEMINI OUTPUT ===");
+        System.out.println("Answer: " + q.getAnswer());
+        System.out.println("Keyword1: " + q.getImageKeyword1());
+        System.out.println("Keyword2: " + q.getImageKeyword2());
+        System.out.println("Keyword3: " + q.getImageKeyword3());
+        System.out.println("Clue1: " + q.getClue1());
 
-            q.setImageUrl1(img1);
-            q.setImageUrl2(img2);
-            q.setImageUrl3(img3);
+        String img1 = unsplashService.getImageUrl(q.getImageKeyword1());
+        String img2 = unsplashService.getImageUrl(q.getImageKeyword2());
+        String img3 = unsplashService.getImageUrl(q.getImageKeyword3());
 
-            model.addAttribute("generated", q);
-            model.addAttribute("message", "Review the question below.");
+        // DEBUG — print Unsplash output to terminal
+        System.out.println("=== UNSPLASH OUTPUT ===");
+        System.out.println("Image1: " + img1);
+        System.out.println("Image2: " + img2);
+        System.out.println("Image3: " + img3);
 
-        } catch (Exception e) {
-            model.addAttribute("error", "Generation failed: " + e.getMessage());
-        }
-        return "admin";
+        q.setImageUrl1(img1);
+        q.setImageUrl2(img2);
+        q.setImageUrl3(img3);
+
+        model.addAttribute("generated", q);
+        model.addAttribute("message", "Review the question below.");
+
+    } catch (Exception e) {
+        System.out.println("=== ERROR ===");
+        System.out.println(e.getMessage());
+        e.printStackTrace();
+        model.addAttribute("error", "Generation failed: " + e.getMessage());
     }
+    return "admin";
+}
 
     // Approve — save to DB
-    @PostMapping("/approve")
+    @PostMapping("/admin/approve")
     public String approveQuestion(
         @RequestParam String answer,
         @RequestParam String imageUrl1,
@@ -69,14 +85,14 @@ public class AdminController {
     }
 
     // Reject — discard
-    @PostMapping("/reject")
+    @PostMapping("/admin/reject")
     public String rejectQuestion(Model model) {
         model.addAttribute("message", "Question rejected. Generate a new one.");
         return "admin";
     }
 
     // Regenerate — call Gemini again
-    @PostMapping("/regenerate")
+    @PostMapping("/admin/regenerate")
     public String regenerateQuestion(Model model) {
         return generateQuestion(model);
     }
