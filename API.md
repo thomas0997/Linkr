@@ -215,4 +215,4 @@ Gemini output:
 - [ ] Sign up for Unsplash Developer account → get API key (free, unsplash.com/developers)
 - [ ] Sign up for Gemini API → get API key (free tier, aistudio.google.com)
 - [ ] Make sure your Spring Boot app is running clean with no errors
-- [ ] Add the 3 dependencies above to pom.xml before writing any code
+- [check] Add the 3 dependencies above to pom.xml before writing any code
