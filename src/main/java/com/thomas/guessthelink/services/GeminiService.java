@@ -24,19 +24,29 @@ public class GeminiService {
         String prompt = """
             Generate a "Guess the Link" puzzle where 3 images are connected by a hidden link through wordplay or cultural references.
             Example: sole of shoe + brussels sprouts + deli meat shop = Capital Cities (Seoul, Brussels, Delhi)
+            Another Example is: A fly, A lamp shade, and a feather. = Boxing Weight Classes (Flyweight, LightWeight, Featherweight)
+            Another Example is: A man drinking alcohol, A picture of James Bond, and Jimmy Saville = Famous Streets in London (Bond Street, Saville Row, etc)
+            Another Example is: Bike Handle Bars, A Goat, and Mutton Meat = Types of Mustaches (Handlebar, Goatee, Mutton Chops)
+            Final Example is: A slice of bread, Flag of Switzdrland, and a drum set = Types of Rolls (Bread Roll, Swiss Roll, Drum Roll)
+             The answer should be a common phrase, category, or concept that can be linked to all 3 images through wordplay or cultural references. 
+             The images themselves should be fairly straightforward and not too obscure. 
+             Provide 3 clues that get progressively easier but do not outright give away the answer until the last clue.
+             The response must be in the following JSON format. 
+             The "reasoning" fields should explain how each image connects to the answer in a way that would make sense to a human trying to solve the puzzle.
+             Don't give out these same answers as a generated qeustion, these are just examples to show the format and style of the puzzles I want:
             The wordplay must work in English.
             Return ONLY valid JSON, no markdown, no extra text:
             {
-              "answer": "the link",
-              "imageKeyword1": "specific search term for image 1",
-              "imageKeyword2": "specific search term for image 2",
-              "imageKeyword3": "specific search term for image 3",
-              "reasoning1": "why image 1 connects to the answer",
-              "reasoning2": "why image 2 connects to the answer",
-              "reasoning3": "why image 3 connects to the answer",
-              "clue1": "vague category hint",
-              "clue2": "narrows it down",
-              "clue3": "almost gives it away"
+                "answer": "the link",
+                "imageKeyword1": "specific search term for image 1",
+                "imageKeyword2": "specific search term for image 2",
+                "imageKeyword3": "specific search term for image 3",
+                "reasoning1": "why image 1 connects to the answer",
+                "reasoning2": "why image 2 connects to the answer",
+                "reasoning3": "why image 3 connects to the answer",
+                "clue1": "vague category hint",
+                "clue2": "narrows it down",
+                "clue3": "almost gives it away"
             }
         """;
 
