@@ -1,6 +1,7 @@
 //BUGS FOUND:
 1. When it got the correct answer, it doesnt progress – which is good, but it also allows the user to repeat the same level over and over and accumulate points. I want it to give a pop-up of staytuned, then redirect to homepage instead.
 2. When I press the clues, nothing pop ups in the clues field
+3. I updated the tries greater than 10, so that users can still guess but only one coins is given. BUG: it doesnt reset the answer field when its incorrect
 
 
 
@@ -426,10 +427,9 @@
         }, 2000);
 
     } else if (tries >= 10) {
-    submitted = true;
-    document.getElementById('guess-field').disabled = true;
-    document.querySelector('.submit-btn').disabled = true;
-    showMsg('Out of tries! The answer was: ' + correctAnswer, '#ff4444');
+
+
+    showMsg('Out of tries!', '#ff4444');
     // no coins, no level progression — just show the answer
 
     } else {
