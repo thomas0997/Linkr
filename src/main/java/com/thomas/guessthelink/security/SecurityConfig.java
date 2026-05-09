@@ -15,17 +15,10 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                // admin routes require authentication
-                .requestMatchers("/admin/**").authenticated()
-                // everything else is public
-                .anyRequest().permitAll()
-            )
-            .formLogin(form -> form
-                .loginPage("/admin/login")
-                .permitAll()
-            )
-            .logout(logout -> logout.permitAll());
-
+                .anyRequest().permitAll()  // temporarily open everything
+            );
         return http.build();
     }
+
+    
 }
