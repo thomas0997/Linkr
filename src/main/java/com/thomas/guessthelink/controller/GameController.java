@@ -2,13 +2,12 @@ package com.thomas.guessthelink.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-
+import com.thomas.guessthelink.*;
 import com.thomas.guessthelink.services.*;
 import com.thomas.guessthelink.repository.GameProgressRepository;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
-import com.thomas.guessthelink.*;
 import java.util.*;
 
 
