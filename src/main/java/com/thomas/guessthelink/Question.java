@@ -39,6 +39,6 @@ public class Question {
     public String getImageThree(){ return imageThree; }
     public String getAnswer(){ return answer; }
     public int getLevelNumber(){ return levelNumber; }
-    public Long getID(){ return id; }
+    public Long getId(){ return id; }
     
 }

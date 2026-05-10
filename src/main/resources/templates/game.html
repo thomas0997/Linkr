@@ -301,63 +301,76 @@
     </div>
 
     <!-- MAIN -->
-    <div class="main">
+    <!-- MAIN -->
+<div class="main">
     <input type="hidden" id="correct-answer" th:value="${question != null ? question.answer : ''}">
     <input type="hidden" id="player-coins" th:value="${player != null ? player.coins : 0}" value="0">
+    <input type="hidden" id="clue-one" th:value="${question != null ? question.clueOne : ''}">
+    <input type="hidden" id="clue-two" th:value="${question != null ? question.clueTwo : ''}">
+    <input type="hidden" id="clue-three" th:value="${question != null ? question.clueThree : ''}">
 
-
-
-    <!-- Level pill — injected from Spring -->
-    <div class="level-pill">LEVEL <span th:text="${player.currentLevel}">1</span></div>
-
-    <!-- 3 question images — injected from Spring -->
-    <div class="imgs">
-    <div class="slot">
-        <img th:if="${question != null}" th:src="${question.imageOne}" alt="Image 1">
-        <span th:if="${question == null}">❓</span>
+    <!-- ALREADY COMPLETED — show answer, lock game -->
+    <div th:if="${alreadyCompleted}" style="text-align:center;padding:40px 20px">
+        <div style="font-size:48px;margin-bottom:16px">✓</div>
+        <div style="font-family:'Inter',sans-serif;font-size:22px;color:#cc2266;font-weight:700;margin-bottom:8px">Already Completed!</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:4px">The answer was:</div>
+        <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:800;color:#fff;margin-bottom:24px" th:text="${question.answer}"></div>
+        <a href="/home" style="display:inline-block;background:#cc2266;color:#fff;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px">Back to Home ↗</a>
     </div>
-    <div class="slot">
-        <img th:if="${question != null}" th:src="${question.imageTwo}" alt="Image 2">
-        <span th:if="${question == null}">❓</span>
-    </div>
-    <div class="slot">
-        <img th:if="${question != null}" th:src="${question.imageThree}" alt="Image 3">
-        <span th:if="${question == null}">❓</span>
-    </div>
-    </div>
-    <!-- Clue reveal box -->
-    <div class="clue-display" id="clue-display">Use a clue to reveal a hint....</div>
 
-    <!-- Guess panel -->
-    <div class="panel">
-        <div class="panel-label">Your Guess</div>
+    <!-- ACTIVE GAME — only show if not completed -->
+    <div th:if="${!alreadyCompleted}" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:16px">
 
-        <!-- Posts guess to /guess in GameController -->
-        <input class="guess-input" type="text" id="guess-field" placeholder="What's the link?: " onkeydown="if(event.key==='Enter')submitGuess()">
-        <div class="wrong-msg" id="wrong-msg"></div>
-        <button class="submit-btn" onclick="submitGuess()">Submit ↗</button>
+        <!-- Level pill -->
+        <div class="level-pill">LEVEL <span th:text="${player.currentLevel}">1</span></div>
 
-        <!-- Try dots tracker -->
-        <div class="tries-row" id="tries-row">
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <!-- 3 images -->
+        <div class="imgs">
+            <div class="slot">
+                <img th:if="${question != null}" th:src="${question.imageOne}" alt="Image 1">
+                <span th:if="${question == null}">❓</span>
+            </div>
+            <div class="slot">
+                <img th:if="${question != null}" th:src="${question.imageTwo}" alt="Image 2">
+                <span th:if="${question == null}">❓</span>
+            </div>
+            <div class="slot">
+                <img th:if="${question != null}" th:src="${question.imageThree}" alt="Image 3">
+                <span th:if="${question == null}">❓</span>
+            </div>
         </div>
-        <div class="tries-label" id="tries-label">1/10 Tries</div>
 
-        <!-- Clue buttons -->
-        <div class="clue-row">
-        <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">|    2 🪙</span></div>
-        <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">|    4 🪙</span></div>
-        <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">|    8 🪙</span></div>
+        <!-- Clue display -->
+        <div class="clue-display" id="clue-display">Use a clue to reveal a hint....</div>
+
+        <!-- Guess panel -->
+        <div class="panel">
+            <div class="panel-label">Your Guess</div>
+            <input class="guess-input" type="text" id="guess-field" placeholder="What's the link?" onkeydown="if(event.key==='Enter')submitGuess()">
+            <div class="wrong-msg" id="wrong-msg"></div>
+            <button class="submit-btn" onclick="submitGuess()">Submit ↗</button>
+            <div class="tries-row" id="tries-row">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div class="tries-label" id="tries-label">1/10 Tries</div>
+            <div class="clue-row">
+                <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
+                <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
+                <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
+            </div>
         </div>
+
+        </div>
+    </div>
     </div>
 </div>
 
 <script>
     const clues = [
-    /*[[${question != null ? question.clueOne : ''}]]*/ '',
-    /*[[${question != null ? question.clueTwo : ''}]]*/ '',
-    /*[[${question != null ? question.clueThree : ''}]]*/ ''
+        document.getElementById('clue-one').value,
+        document.getElementById('clue-two').value,
+        document.getElementById('clue-three').value
     ];
     const costs = [2, 4, 8];
 
@@ -421,17 +434,26 @@
         document.querySelector('.submit-btn').disabled = true;
         setTimeout(() => {
         fetch('/next?coinsEarned=' + earned, {
-            method: 'POST',
-            headers: {'Content-Type':'application/x-www-form-urlencoded'}
-        }).then(() => window.location.href = '/game');
-        }, 2000);
+                method: 'POST',
+                headers: {'Content-Type':'application/x-www-form-urlencoded'}
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.hasNext) {
+                    window.location.href = '/game';
+                } else {
+                    document.getElementById('correct-overlay').querySelector('p').textContent = 
+                        '🎉 You finished all levels! Stay tuned for more.';
+                    setTimeout(() => window.location.href = '/home', 2000);
+            }
+        });
+    }, 2000);
 
     } else if (tries >= 10) {
 
 
-    showMsg('Out of tries!', '#ff4444');
-    // no coins, no level progression — just show the answer
-
+    showMsg('Out of tries! Keep trying — 1 coin per correct answer now.', '#ff4444');
+    document.getElementById('guess-field').value = ''; // add this
     } else {
         showMsg('Wrong! Try again.', '#ff4444');
         document.getElementById('guess-field').value = '';

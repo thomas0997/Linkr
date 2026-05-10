@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 import com.thomas.guessthelink.services.*;
+import com.thomas.guessthelink.repository.GameProgressRepository;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
@@ -25,6 +26,9 @@ public class GameController {
     @Autowired
     QuestionService questionService;
 
+    @Autowired 
+    GameProgressRepository gameProgressRepo;
+
 
 
 
@@ -37,35 +41,42 @@ public class GameController {
 
     @PostMapping("/login")    
     public String handleLogin(@RequestParam String username, Model model, HttpSession session){
-        Player player = playerService.findByUsername(username);
-
-        if (player == null){
-            player = new Player(username, 0L, 1);
-            playerService.savePlayer(player);
-
-            
-        }
+        // validate first before anything else
         if (!username.matches("[a-zA-Z0-9_]{3,20}")) {
             return "redirect:/?error=invalid_username";
         }
 
+        Player player = playerService.findByUsername(username);
+        if (player == null){
+            player = new Player(username, 0L, 1);
+            playerService.savePlayer(player);
+        }
+
         session.setAttribute("playerId", player.getId());
         return "redirect:/home";
-
     }
-    @GetMapping("/game")
+
+   @GetMapping("/game")
     public String showGame(Model model, HttpSession session) {
         Long playerId = (Long) session.getAttribute("playerId");
         if (playerId == null) return "redirect:/";
 
         Player player = playerService.getPlayerId(playerId);
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
-        
-        // prevent accessing levels beyond current
+
+        // check if already completed
+        boolean alreadyCompleted = false;
+        if (question != null) {
+            GameProgress progress = gameProgressRepo.findByPlayerIdAndQuestionId(playerId, question.getId());
+            alreadyCompleted = progress != null && progress.getIsComplete();
+        }
+
         model.addAttribute("player", player);
         model.addAttribute("question", question);
+        model.addAttribute("alreadyCompleted", alreadyCompleted);
         return "game";
     }
+
     @PostMapping("/guess")
     public String handleGuess(@RequestParam String guess, 
     @RequestParam int tries, HttpSession session, Model model){
@@ -97,22 +108,21 @@ public class GameController {
     }
 
     @PostMapping("/next")
-    public String nextLevel(HttpSession session, @RequestParam(defaultValue="0") int coinsEarned, Model model) {
+    @ResponseBody
+    public Map<String, Object> nextLevel(HttpSession session, @RequestParam(defaultValue="0") int coinsEarned) {
         Long playerId = (Long) session.getAttribute("playerId");
         Player player = playerService.getPlayerId(playerId);
-        
         int nextLevel = player.getCurrentLevel() + 1;
         Question nextQuestion = questionService.getQuestionByLevel(nextLevel);
-        
-        if (nextQuestion == null) {
-            // no next level — stay, show message
-            if (coinsEarned > 0) playerService.addCoins(playerId, (long) coinsEarned);
-            return "redirect:/game?noNextLevel=true";
-        }
-        
+
         if (coinsEarned > 0) playerService.addCoins(playerId, (long) coinsEarned);
+
+        if (nextQuestion == null) {
+            return Map.of("hasNext", false);
+        }
+
         gameService.unlockNextLevel(playerId);
-        return "redirect:/game";
+        return Map.of("hasNext", true);
     }
 
     @GetMapping("/home")

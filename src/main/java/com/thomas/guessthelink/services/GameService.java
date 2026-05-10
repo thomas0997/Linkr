@@ -53,7 +53,7 @@ public class GameService {
             int coins = calculateCoins(triesUsed);
             playerService.addCoins(playerId,(long) coins);
 
-            GameProgress progress = new GameProgress(playerId, question.getID(), triesUsed, true);
+            GameProgress progress = new GameProgress(playerId, question.getId(), triesUsed, true);
             gameProgressRepo.save(progress);
 
             return new GuessResult(true, coins);
