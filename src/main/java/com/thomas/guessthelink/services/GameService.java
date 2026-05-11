@@ -55,6 +55,11 @@ public class GameService {
 
             GameProgress progress = new GameProgress(playerId, question.getId(), triesUsed, true);
             gameProgressRepo.save(progress);
+            
+            System.out.println("=== SAVING PROGRESS ===");
+            System.out.println("playerId: " + playerId);
+            System.out.println("questionId: " + question.getId());
+            System.out.println("tries: " + triesUsed);
 
             return new GuessResult(true, coins);
         } 

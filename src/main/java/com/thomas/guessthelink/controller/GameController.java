@@ -127,14 +127,22 @@ public class GameController {
     @GetMapping("/home")
     public String showHome(HttpSession session, Model model) {
         Long playerId = (Long) session.getAttribute("playerId");
-        if (playerId == null) return "redirect:/";  // must be first
+        if (playerId == null) return "redirect:/";
 
         Player player = playerService.getPlayerId(playerId);
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
+        
+        // check if next level exists
+        Question nextQuestion = questionService.getQuestionByLevel(player.getCurrentLevel() + 1);
+        boolean hasNextLevel = nextQuestion != null || question != null;
+
         model.addAttribute("player", player);
         model.addAttribute("question", question);
+        model.addAttribute("hasNextLevel", hasNextLevel);
         return "home";
     }
+
+
     @PostMapping("/guest")
     public String handleGuest(HttpSession session) {
         Player guest = new Player("Guest", 0L, 1);
@@ -161,5 +169,35 @@ public class GameController {
         return "leaderboard";
     }
     
+    @PostMapping("/use-clue")
+    @ResponseBody
+    public Map<String, Object> handleUseClue(@RequestParam int clueNumber, HttpSession session) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        Player player = playerService.getPlayerId(playerId);
+        int cost = clueNumber == 1 ? 2 : clueNumber == 2 ? 4 : 8;
+        
+        if (player.getCoins() < cost) {
+            return Map.of("success", false, "coins", player.getCoins());
+        }
+        
+        playerService.addCoins(playerId, (long) -cost); // deduct
+        player = playerService.getPlayerId(playerId);
+        return Map.of("success", true, "coins", player.getCoins());
+    }
+
+    @PostMapping("/guess-complete")
+    @ResponseBody
+    public Map<String, Object> guessComplete(@RequestParam int levelNumber, HttpSession session) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        Player player = playerService.getPlayerId(playerId);
+        Question question = questionService.getQuestionByLevel(levelNumber);
+        
+        if (question != null) {
+            GameProgress progress = new GameProgress(playerId, question.getId(), 0, true);
+            gameProgressRepo.save(progress);
+            System.out.println("Progress saved for player: " + playerId + " question: " + question.getId());
+        }
+        return Map.of("saved", true);
+    }
 }
 

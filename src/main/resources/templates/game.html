@@ -1,7 +1,4 @@
-//BUGS FOUND:
-1. When the user completes a level, they can still play the same level instead of being locked out of it – abusing the coins system
-2. When I use the coins, it updates the coins up top in the header, but when I refresh the page, the coins go back to the original amount (before spending) 
-– not saving the updated coin count and resets them back to its original value. 
+
 
 
 
@@ -307,14 +304,16 @@
     <input type="hidden" id="clue-one" th:value="${question != null ? question.clueOne : ''}">
     <input type="hidden" id="clue-two" th:value="${question != null ? question.clueTwo : ''}">
     <input type="hidden" id="clue-three" th:value="${question != null ? question.clueThree : ''}">
+    <input type="hidden" id="player-level" th:value="${player.currentLevel}" value="1">
+
 
     <!-- ALREADY COMPLETED — show answer, lock game -->
     <div th:if="${alreadyCompleted}" style="text-align:center;padding:40px 20px">
         <div style="font-size:48px;margin-bottom:16px">✓</div>
-        <div style="font-family:'Inter',sans-serif;font-size:22px;color:#cc2266;font-weight:700;margin-bottom:8px">Already Completed!</div>
-        <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:4px">The answer was:</div>
+        <div style="font-family:'Inter',sans-serif;font-size:22px;color:#cc2266;font-weight:700;margin-bottom:8px">Level is Already Completed!</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:4px; margin-top:50px;">The answer was:</div>
         <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:800;color:#fff;margin-bottom:24px" th:text="${question.answer}"></div>
-        <a href="/home" style="display:inline-block;background:#cc2266;color:#fff;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px">Back to Home ↗</a>
+        <a href="/home" style="display:inline-block;background:#cc2266;color:#fff;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px; margin-top:40px;">Back to Home ↗</a>
     </div>
 
     <!-- ACTIVE GAME — only show if not completed -->
@@ -396,18 +395,29 @@
         }
 
     function useClue(i) {
-    if (i > clueUsed + 1) return;
-    if (document.getElementById('cb' + i).classList.contains('disabled')) return;
-    if (coins < costs[i]) { showMsg('Not enough coins!', '#ff4444'); return; }
-    coins -= costs[i];
-    clueUsed = i;
-    document.getElementById('coin-count').textContent = coins;
-    updateCoinColors();
-    const display = document.getElementById('clue-display');
-    display.textContent = clues[i];
-    display.classList.add('active');
-    document.getElementById('cb' + i).classList.add('disabled');
-    document.getElementById('cb' + i).style.pointerEvents = 'none';
+        if (i > clueUsed + 1) return;
+        if (document.getElementById('cb' + i).classList.contains('disabled')) return;
+        if (coins < costs[i]) { showMsg('Not enough coins!', '#ff4444'); return; }
+
+        // save to DB first
+        fetch('/use-clue?clueNumber=' + (i + 1), {
+            method: 'POST',
+            headers: {'Content-Type':'application/x-www-form-urlencoded'}
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { showMsg('Not enough coins!', '#ff4444'); return; }
+            
+            coins = data.coins; // use server's coin count
+            clueUsed = i;
+            document.getElementById('coin-count').textContent = coins;
+            updateCoinColors();
+            const display = document.getElementById('clue-display');
+            display.textContent = clues[i];
+            display.classList.add('active');
+            document.getElementById('cb' + i).classList.add('disabled');
+            document.getElementById('cb' + i).style.pointerEvents = 'none';
+        });
     }
 
     function submitGuess() {
@@ -419,31 +429,41 @@
     if (tries <= 10) dots[tries-1].classList.add('used');
     document.getElementById('tries-label').textContent = tries + '/10 Tries';
 
-    if (val === correctAnswer) {
-        submitted = true;
-        const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
-        coins += earned;
-        document.getElementById('coin-count').textContent = coins;
-        updateCoinColors();
-        showCorrectAnimation(earned);
-        document.getElementById('guess-field').disabled = true;
-        document.querySelector('.submit-btn').disabled = true;
-        setTimeout(() => {
+   if (val === correctAnswer) {
+    submitted = true;
+    const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
+    const level = document.getElementById('player-level').value;
+    
+    coins += earned;
+    document.getElementById('coin-count').textContent = coins;
+    updateCoinColors();
+    showCorrectAnimation(earned);
+    document.getElementById('guess-field').disabled = true;
+    document.querySelector('.submit-btn').disabled = true;
+
+    // save progress to DB
+    fetch('/guess-complete?levelNumber=' + level, {
+        method: 'POST',
+        headers: {'Content-Type':'application/x-www-form-urlencoded'}
+    });
+
+    setTimeout(() => {
         fetch('/next?coinsEarned=' + earned, {
-                method: 'POST',
-                headers: {'Content-Type':'application/x-www-form-urlencoded'}
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.hasNext) {
-                    window.location.href = '/game';
-                } else {
-                    document.getElementById('correct-overlay').querySelector('p').textContent = 
-                        '🎉 You finished all levels! Stay tuned for more.';
-                    setTimeout(() => window.location.href = '/home', 2000);
+            method: 'POST',
+            headers: {'Content-Type':'application/x-www-form-urlencoded'}
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.hasNext) {
+                window.location.href = '/game';
+            } else {
+                document.getElementById('correct-overlay').querySelector('p').textContent = 
+                    '🎉 You finished all levels! Stay tuned for more.';
+                setTimeout(() => window.location.href = '/home', 2000);
             }
         });
     }, 2000);
+
 
     } else if (tries >= 10) {
 

@@ -223,13 +223,17 @@
 
   <div class="btns">
     <!-- Daily Challenge — goes to /game with daily mode -->
-    <form method="GET" th:action="@{/game}">
-      <button class="btn-daily" type="submit">Daily Challenge ↗</button>
-    </form>
-    <!-- Play — goes to /game normally -->
-    <form method="GET" th:action="@{/game}">
+  <!-- Play — disabled if no next level -->
+  <form method="GET" th:action="@{/game}" th:if="${hasNextLevel}">
       <button class="btn-play" type="submit">Play</button>
-    </form>
+  </form>
+  <button class="btn-play" th:if="${!hasNextLevel}" 
+      style="opacity:0.4;cursor:not-allowed;" 
+      onclick="alert('🎉 You finished all levels! Stay tuned for more.')">
+      Play (Coming Soon)
+  </button>
+
+    <!-- Play — goes to /game normally -->
     <!-- Leaderboards — goes to /leaderboard -->
     <form method="GET" th:action="@{/leaderboard}">
       <button class="btn-lb" type="submit">Leaderboards</button>
