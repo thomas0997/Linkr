@@ -124,4 +124,17 @@ public class GeminiService {
         if (quote1 == -1 || quote2 == -1) return "";
         return json.substring(quote1 + 1, quote2);
     }
+    @Value("${gemini.mock:false}")
+private boolean useMock;
+
+public GeneratedQuestion generateQuestion() throws Exception {
+    if (useMock) {
+        // return mock question
+        return new GeneratedQuestion("types of rolls", "", "", "", 
+            "bread loaf", "switzerland flag", "drum kit",
+            "Think: something after a word", "Each sounds like it precedes the same word", "Bread ___, Swiss ___, Drum ___");
+    }
+    // real Gemini call below
+    ...
+}
 }
