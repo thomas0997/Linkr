@@ -8,133 +8,134 @@ import java.net.URI;
 import java.net.http.*;
 import java.net.http.HttpRequest.BodyPublishers;
 
+// Uses Groq API (free, no geographic restrictions).
+// Groq uses the same request/response format as OpenAI, so if you ever
+// want to switch to OpenAI just change the URL and model name.
 @Service
 public class GeminiService {
 
-    @Value("${gemini.api.key}")
+    @Value("${groq.api.key}")
     private String apiKey;
 
-    @Value("${gemini.api.url}")
+    @Value("${groq.api.url}")
     private String apiUrl;
 
     private final HttpClient client = HttpClient.newHttpClient();
-/*
+
     public GeneratedQuestion generateQuestion() throws Exception {
 
-        String prompt = """
-            Generate a "Guess the Link" puzzle where 3 images are connected by a hidden link through wordplay or cultural references.
-            Example: sole of shoe + brussels sprouts + deli meat shop = Capital Cities (Seoul, Brussels, Delhi)
-            Another Example is: A fly, A lamp shade, and a feather. = Boxing Weight Classes (Flyweight, LightWeight, Featherweight)
-            Another Example is: A man drinking alcohol, A picture of James Bond, and Jimmy Saville = Famous Streets in London (Bond Street, Saville Row, etc)
-            Another Example is: Bike Handle Bars, A Goat, and Mutton Meat = Types of Mustaches (Handlebar, Goatee, Mutton Chops)
-            Final Example is: A slice of bread, Flag of Switzdrland, and a drum set = Types of Rolls (Bread Roll, Swiss Roll, Drum Roll)
-            The answer should be a common phrase, category, or concept that can be linked to all 3 images through wordplay or cultural references. 
-            The images themselves should be fairly straightforward and not too obscure. 
-            Provide 3 clues that get progressively easier but do not outright give away the answer until the last clue.
-            The response must be in the following JSON format. 
-            The "reasoning" fields should explain how each image connects to the answer in a way that would make sense to a human trying to solve the puzzle.
-            Don't give out these same answers as a generated qeustion, these are just examples to show the format and style of the puzzles I want:
-            The wordplay must work in English.
-            Return ONLY valid JSON, no markdown, no extra text:
-            {
-                "answer": "the link",
-                "imageKeyword1": "specific search term for image 1",
-                "imageKeyword2": "specific search term for image 2",
-                "imageKeyword3": "specific search term for image 3",
-                "reasoning1": "why image 1 connects to the answer",
-                "reasoning2": "why image 2 connects to the answer",
-                "reasoning3": "why image 3 connects to the answer",
-                "clue1": "vague category hint",
-                "clue2": "narrows it down",
-                "clue3": "almost gives it away"
-            }
-        """;
+        String prompt =
+            "Generate a Guess the Link puzzle where 3 images are connected by a hidden link through wordplay or cultural references.\n" +
+            "Example: sole of shoe + brussels sprouts + deli meat shop = Capital Cities (Seoul, Brussels, Delhi)\n" +
+            "Example: A fly, A lamp shade, a feather = Boxing Weight Classes (Flyweight, Lightweight, Featherweight)\n" +
+            "Example: Bike Handle Bars, A Goat, Mutton Meat = Types of Mustaches (Handlebar, Goatee, Mutton Chops)\n" +
+            "Example: A slice of bread, Flag of Switzerland, a drum set = Types of Rolls (Bread Roll, Swiss Roll, Drum Roll)\n" +
+            "Rules:\n" +
+            "- The answer must be a common English phrase, category, or concept.\n" +
+            "- Each of the 3 images must connect to the answer through wordplay (homophones, sounds-like, compound words).\n" +
+            "- The images should be visually clear and not too obscure.\n" +
+            "- Do NOT reuse any of the examples above.\n" +
+            "- The wordplay must work in English.\n" +
+            "- Provide 3 clues that get progressively easier. The last clue should almost give it away.\n" +
+            "Return ONLY valid JSON, no markdown, no code fences, no explanation. Exactly this structure:\n" +
+            "{\"answer\":\"the link\",\"imageKeyword1\":\"search term for image 1\",\"imageKeyword2\":\"search term for image 2\",\"imageKeyword3\":\"search term for image 3\",\"clue1\":\"vague category hint\",\"clue2\":\"narrows it down\",\"clue3\":\"almost gives it away\"}";
 
-        String requestBody = """
-            {
-              "contents": [{
-                "parts": [{
-                  "text": "%s"
-                }]
-              }]
-            }
-        """.formatted(prompt.replace("\"", "\\\"").replace("\n", "\\n"));
+        // Groq uses OpenAI's messages format
+        String requestBody =
+            "{\"model\":\"llama-3.3-70b-versatile\"," +
+            "\"messages\":[{\"role\":\"user\",\"content\":\"" + escapeForJson(prompt) + "\"}]}";
 
-
+        // Auth is a Bearer token in the header — NOT a ?key= query param like Gemini
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(apiUrl + "?key=" + apiKey))
+            .uri(URI.create(apiUrl))
             .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + apiKey)
             .POST(BodyPublishers.ofString(requestBody))
             .build();
 
-
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-
-
+        System.out.println("=== GROQ RAW RESPONSE ===");
+        System.out.println(response.statusCode());
+        System.out.println(response.body().substring(0, Math.min(800, response.body().length())));
 
         return parseResponse(response.body());
     }
 
-    private GeneratedQuestion parseResponse(String json) {
-        // extract the text content from Gemini response
-        String text = extractField(json, "text");
+    private GeneratedQuestion parseResponse(String rawResponse) {
+        // Groq (OpenAI format) wraps the answer in: choices[0].message.content
+        String content = extractJsonString(rawResponse, "content");
 
-        // clean up any markdown formatting Gemini might add
-        text = text.replace("```json", "").replace("```", "").trim();
+        if (content == null || content.isEmpty()) {
+            System.out.println("=== PARSE FAILED: could not find 'content' field in Groq response ===");
+            System.out.println(rawResponse);
+            throw new RuntimeException("Groq returned an unparseable response — check logs above.");
+        }
 
-        String answer = extractField(text, "answer");
-        String keyword1 = extractField(text, "imageKeyword1");
-        String keyword2 = extractField(text, "imageKeyword2");
-        String keyword3 = extractField(text, "imageKeyword3");
-        String clue1 = extractField(text, "clue1");
-        String clue2 = extractField(text, "clue2");
-        String clue3 = extractField(text, "clue3");
+        // Strip markdown fences if the model added them anyway
+        content = content.replace("```json", "").replace("```", "").trim();
 
-        GeneratedQuestion q = new GeneratedQuestion(
+        System.out.println("=== EXTRACTED JSON FROM GROQ ===");
+        System.out.println(content);
+
+        String answer   = extractJsonString(content, "answer");
+        String keyword1 = extractJsonString(content, "imageKeyword1");
+        String keyword2 = extractJsonString(content, "imageKeyword2");
+        String keyword3 = extractJsonString(content, "imageKeyword3");
+        String clue1    = extractJsonString(content, "clue1");
+        String clue2    = extractJsonString(content, "clue2");
+        String clue3    = extractJsonString(content, "clue3");
+
+        if (answer == null || answer.isEmpty()) {
+            throw new RuntimeException("Groq JSON is missing the 'answer' field. Content was: " + content);
+        }
+
+        return new GeneratedQuestion(
             answer, "", "", "", keyword1, keyword2, keyword3, clue1, clue2, clue3
         );
-        return q;
-    }*/
-
-
-        public GeneratedQuestion generateQuestion() throws Exception {
-    String answer = "types of rolls";
-    String k1 = "bread loaf bakery";
-    String k2 = "switzerland flag";
-    String k3 = "drum kit";
-    String c1 = "Think: something that follows a word";
-    String c2 = "Each image sounds like it precedes the same word";
-    String c3 = "Bread ___, Swiss ___, Drum ___";
-
-    GeneratedQuestion q = new GeneratedQuestion(
-        answer, "", "", "", k1, k2, k3, c1, c2, c3
-    );
-    return q;
-}
-
-    // simple JSON field extractor — no library needed
-    private String extractField(String json, String field) {
-        String search = "\"" + field + "\"";
-        int idx = json.indexOf(search);
-        if (idx == -1) return "";
-        int colon = json.indexOf(":", idx);
-        int quote1 = json.indexOf("\"", colon);
-        int quote2 = json.indexOf("\"", quote1 + 1);
-        if (quote1 == -1 || quote2 == -1) return "";
-        return json.substring(quote1 + 1, quote2);
     }
-    @Value("${gemini.mock:false}")
-private boolean useMock;
 
-public GeneratedQuestion generateQuestion() throws Exception {
-    if (useMock) {
-        // return mock question
-        return new GeneratedQuestion("types of rolls", "", "", "", 
-            "bread loaf", "switzerland flag", "drum kit",
-            "Think: something after a word", "Each sounds like it precedes the same word", "Bread ___, Swiss ___, Drum ___");
+    private String escapeForJson(String text) {
+        return text
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t");
     }
-    // real Gemini call below
-    ...
-}
+
+    private String extractJsonString(String json, String field) {
+        String key = "\"" + field + "\"";
+        int keyIdx = json.indexOf(key);
+        if (keyIdx == -1) return "";
+
+        int colon = json.indexOf(":", keyIdx + key.length());
+        if (colon == -1) return "";
+
+        int pos = colon + 1;
+        while (pos < json.length() && Character.isWhitespace(json.charAt(pos))) pos++;
+
+        if (pos >= json.length() || json.charAt(pos) != '"') return "";
+        pos++;
+
+        StringBuilder sb = new StringBuilder();
+        while (pos < json.length()) {
+            char c = json.charAt(pos);
+            if (c == '\\' && pos + 1 < json.length()) {
+                char next = json.charAt(pos + 1);
+                switch (next) {
+                    case '"':  sb.append('"');  pos += 2; continue;
+                    case '\\': sb.append('\\'); pos += 2; continue;
+                    case 'n':  sb.append('\n'); pos += 2; continue;
+                    case 'r':  sb.append('\r'); pos += 2; continue;
+                    case 't':  sb.append('\t'); pos += 2; continue;
+                    default:   sb.append(c);    pos++;    continue;
+                }
+            }
+            if (c == '"') break;
+            sb.append(c);
+            pos++;
+        }
+        return sb.toString();
+    }
 }
