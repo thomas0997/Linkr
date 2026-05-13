@@ -29,9 +29,21 @@ public class GeminiService {
             "Example: sole of shoe + brussels sprouts + deli meat shop = Capital Cities (Seoul, Brussels, Delhi)\n" +
             "Example: A fly, A lamp shade, a feather = Boxing Weight Classes (Flyweight, Lightweight, Featherweight)\n" +
             "Example: Bike Handle Bars, A Goat, Mutton Meat = Types of Mustaches (Handlebar, Goatee, Mutton Chops)\n" +
-            "Example: A slice of bread, Flag of Switzerland, a drum set = Types of Rolls (Bread Roll, Swiss Roll, Drum Roll)\n" +
+            "Example: A slice of bread, Flag of Switzerland, a drum set = Types of Rolls (Bread Roll, Swiss Roll, Drum Roll)\n" + 
+            "Example: A road Highways, the Burj Khalifa, and a person reading = Famous Adult Film (P*rn) stars (Lana Rhodes, Mia Khalifa, and Riley Reid)\n" + 
+            "Example: A picture of a bicycle, a grass field with a rainbow, and a scorption = Football Skills (Bicycle Kick, Rainbow Flick, Scorpion Kick)\n" +
+            "Example: DNA strand, A flare being lit up, and a Cargo Ship with containers = Types of Trousers (Jeans, Flares, Cargo)\n" +
+            "Example: A man playing a guitar, optimus prime in transformers, and the movie Monsters Inc = Energy Drinks (Rockstar, Prime, Monsters)\n" +
+            "Example: A Whale swimming, The Giga Chad Meme, and picture of germs = Counties (Wales, Chad, Germany)\n" +
+            "Example: A woman's boobs, A butterfly, and a dancer = Swimming Strokes (Breaststroke, Butterfly Stroke, Freestyle)\n" +
+            "Example: Chris Pine (the actor), Ash Tray for cigarretes, and a beach = Types of Trees (Pine Trees, Ash Trees, Beech Trees)\n" +
+            "Example: Grass, A computer program, and a corn = Types of Snakes (Grass Snake, Python, Corn Snake)\n" +
+            "Example: A bat, Frank Sinatra (The Singer), and Raheem Sterling (The Footballer) = Currencies (Baht, Franc, Sterling)\n" +
             "Rules:\n" +
             "- The answer must be a common English phrase, category, or concept.\n" +
+            "- Don't repeat rejected suggestions.\n" +
+            "- Its a riddle–like challenge. Don't Make it Obvious and make it tricky.\n" +
+            "- All three clues must be related to the answer.\n" +
             "- Each of the 3 images must connect to the answer through wordplay (homophones, sounds-like, compound words).\n" +
             "- The images should be visually clear and not too obscure.\n" +
             "- Do NOT reuse any of the examples above.\n" +
