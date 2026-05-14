@@ -9,18 +9,47 @@
     h1{font-size:24px;margin-bottom:8px;color:#cc2266}
     .msg{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:24px}
     .err{color:#ff4444}
+    .ok{color:#44ff99}
     .btn{background:#cc2266;border:none;border-radius:8px;padding:10px 20px;color:#fff;font-size:14px;cursor:pointer;font-weight:600;margin-right:8px}
     .btn.secondary{background:rgba(204,34,102,0.15);border:0.5px solid rgba(204,34,102,0.3)}
     .btn.danger{background:rgba(255,50,50,0.2);border:0.5px solid rgba(255,50,50,0.3)}
+    .btn.small{padding:6px 12px;font-size:12px;margin:0}
     .card{background:rgba(18,0,9,0.9);border:0.5px solid rgba(204,34,102,0.2);border-radius:16px;padding:24px;margin-bottom:24px;max-width:700px}
+
+    /* ── image slots ── */
     .imgs{display:flex;gap:12px;margin-bottom:16px}
-    .img-slot{flex:1;aspect-ratio:1;border-radius:12px;overflow:hidden;border:0.5px solid rgba(204,34,102,0.2);max-width:180px}
-    .img-slot img{width:100%;height:100%;object-fit:cover}
+    .img-slot{flex:1;max-width:200px}
+    .img-preview{
+      aspect-ratio:1;border-radius:12px;overflow:hidden;
+      border:0.5px solid rgba(204,34,102,0.2);
+      background:rgba(204,34,102,0.06);
+      margin-bottom:8px;
+    }
+    .img-preview img{width:100%;height:100%;object-fit:cover;display:block}
+    .img-preview .placeholder{
+      width:100%;height:100%;min-height:140px;
+      display:flex;align-items:center;justify-content:center;
+      color:rgba(255,255,255,0.2);font-size:12px;text-align:center;padding:8px;
+    }
+
+    /* editable keyword row */
+    .keyword-row{display:flex;gap:6px;align-items:center}
+    .keyword-input{
+      flex:1;background:rgba(204,34,102,0.08);
+      border:0.5px solid rgba(204,34,102,0.3);border-radius:6px;
+      padding:6px 10px;color:#fff;font-size:12px;font-family:'Inter',sans-serif;
+      outline:none;
+    }
+    .keyword-input:focus{border-color:#cc2266}
+    .refetch-status{font-size:11px;margin-top:4px;min-height:14px;color:rgba(255,255,255,0.4)}
+
     .field{margin-bottom:12px;font-size:13px}
     .field label{color:rgba(255,255,255,0.4);font-size:11px;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px}
     .field span{color:#fff}
     .level-input{background:rgba(204,34,102,0.08);border:0.5px solid rgba(204,34,102,0.3);border-radius:8px;padding:8px 12px;color:#fff;font-size:14px;width:80px}
     .actions{display:flex;align-items:center;gap:8px;margin-top:16px}
+
+    /* hidden imageUrl inputs that JS updates */
     input[type=hidden]{}
   </style>
 </head>
@@ -28,28 +57,77 @@
 
   <h1>Linkr Admin Panel</h1>
 
-  <!-- Status message -->
-  <p class="msg" th:text="${message}">Ready to generate.</p>
+  <!-- Status message — works for both direct render AND flash redirect -->
+  <p class="msg"
+     th:classappend="${message != null and message.startsWith('✓')} ? 'ok' : ''"
+     th:text="${message != null ? message : 'Ready to generate.'}">Ready to generate.</p>
   <p class="msg err" th:if="${error}" th:text="${error}"></p>
 
-  <!-- Generate button -->
+  <!-- Generate button — only when no question is being reviewed -->
   <form method="POST" th:action="@{/admin/generate}" th:if="${generated == null}">
     <button class="btn" type="submit">Generate Question ↗</button>
   </form>
 
-  <!-- Review card — shown after generation -->
-  <div class="card" th:if="${generated != null}">
+  <!-- ── Review card ── -->
+  <div class="card" th:if="${generated != null}" id="review-card">
 
-    <!-- Images -->
+    <!-- 3 image slots — each has: preview, editable keyword, re-fetch button, hidden URL input -->
     <div class="imgs">
-      <div class="img-slot"><img th:src="${generated.imageUrl1}" alt="Image 1"></div>
-      <div class="img-slot"><img th:src="${generated.imageUrl2}" alt="Image 2"></div>
-      <div class="img-slot"><img th:src="${generated.imageUrl3}" alt="Image 3"></div>
-    </div>
 
-    <!-- Keywords -->
+      <!-- Slot 1 -->
+      <div class="img-slot">
+        <div class="img-preview">
+          <img id="img1" th:src="${generated.imageUrl1}" alt="Image 1"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+               style="display:block">
+          <div class="placeholder" style="display:none">No image</div>
+        </div>
+        <div class="keyword-row">
+          <input class="keyword-input" id="kw1" type="text" th:value="${generated.imageKeyword1}" placeholder="keyword">
+          <button class="btn small" type="button" onclick="refetch(1)">↺</button>
+        </div>
+        <div class="refetch-status" id="rs1"></div>
+        <!-- hidden — approve form reads this; JS updates it on re-fetch -->
+        <input type="hidden" id="url1" name="imageUrl1-live" th:value="${generated.imageUrl1}">
+      </div>
+
+      <!-- Slot 2 -->
+      <div class="img-slot">
+        <div class="img-preview">
+          <img id="img2" th:src="${generated.imageUrl2}" alt="Image 2"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+               style="display:block">
+          <div class="placeholder" style="display:none">No image</div>
+        </div>
+        <div class="keyword-row">
+          <input class="keyword-input" id="kw2" type="text" th:value="${generated.imageKeyword2}" placeholder="keyword">
+          <button class="btn small" type="button" onclick="refetch(2)">↺</button>
+        </div>
+        <div class="refetch-status" id="rs2"></div>
+        <input type="hidden" id="url2" name="imageUrl2-live" th:value="${generated.imageUrl2}">
+      </div>
+
+      <!-- Slot 3 -->
+      <div class="img-slot">
+        <div class="img-preview">
+          <img id="img3" th:src="${generated.imageUrl3}" alt="Image 3"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+               style="display:block">
+          <div class="placeholder" style="display:none">No image</div>
+        </div>
+        <div class="keyword-row">
+          <input class="keyword-input" id="kw3" type="text" th:value="${generated.imageKeyword3}" placeholder="keyword">
+          <button class="btn small" type="button" onclick="refetch(3)">↺</button>
+        </div>
+        <div class="refetch-status" id="rs3"></div>
+        <input type="hidden" id="url3" name="imageUrl3-live" th:value="${generated.imageUrl3}">
+      </div>
+
+    </div><!-- /imgs -->
+
+    <!-- Keywords row (read-only display, editing happens above) -->
     <div class="field">
-      <label>Image Keywords</label>
+      <label>Original Keywords</label>
       <span th:text="${generated.imageKeyword1 + ' | ' + generated.imageKeyword2 + ' | ' + generated.imageKeyword3}"></span>
     </div>
 
@@ -60,28 +138,20 @@
     </div>
 
     <!-- Clues -->
-    <div class="field">
-      <label>Clue 1</label>
-      <span th:text="${generated.clue1}"></span>
-    </div>
-    <div class="field">
-      <label>Clue 2</label>
-      <span th:text="${generated.clue2}"></span>
-    </div>
-    <div class="field">
-      <label>Clue 3</label>
-      <span th:text="${generated.clue3}"></span>
-    </div>
+    <div class="field"><label>Clue 1</label><span th:text="${generated.clue1}"></span></div>
+    <div class="field"><label>Clue 2</label><span th:text="${generated.clue2}"></span></div>
+    <div class="field"><label>Clue 3</label><span th:text="${generated.clue3}"></span></div>
 
-    <!-- Approve form -->
-    <form method="POST" th:action="@{/admin/approve}" style="display:inline">
-      <input type="hidden" name="answer" th:value="${generated.answer}">
-      <input type="hidden" name="imageUrl1" th:value="${generated.imageUrl1}">
-      <input type="hidden" name="imageUrl2" th:value="${generated.imageUrl2}">
-      <input type="hidden" name="imageUrl3" th:value="${generated.imageUrl3}">
-      <input type="hidden" name="clue1" th:value="${generated.clue1}">
-      <input type="hidden" name="clue2" th:value="${generated.clue2}">
-      <input type="hidden" name="clue3" th:value="${generated.clue3}">
+    <!-- ── Approve form ── -->
+    <!-- imageUrl1/2/3 are hidden inputs; JS keeps them in sync when admin re-fetches an image -->
+    <form method="POST" th:action="@{/admin/approve}" id="approve-form" style="display:inline">
+      <input type="hidden" name="answer"    th:value="${generated.answer}">
+      <input type="hidden" name="imageUrl1" id="approve-url1" th:value="${generated.imageUrl1}">
+      <input type="hidden" name="imageUrl2" id="approve-url2" th:value="${generated.imageUrl2}">
+      <input type="hidden" name="imageUrl3" id="approve-url3" th:value="${generated.imageUrl3}">
+      <input type="hidden" name="clue1"     th:value="${generated.clue1}">
+      <input type="hidden" name="clue2"     th:value="${generated.clue2}">
+      <input type="hidden" name="clue3"     th:value="${generated.clue3}">
       <div class="actions">
         <div>
           <label style="font-size:12px;color:rgba(255,255,255,0.4)">Level:</label>
@@ -100,7 +170,49 @@
         <button class="btn secondary" type="submit">↺ Regenerate</button>
       </form>
     </div>
-  </div>
+
+  </div><!-- /card -->
+
+<script>
+  // Re-fetches one image slot from Unsplash via the new /admin/refetch-image endpoint.
+  // Updates the <img> preview AND the hidden approve-form input so the right URL gets saved.
+  async function refetch(slot) {
+    const kw    = document.getElementById('kw' + slot).value.trim();
+    const img   = document.getElementById('img' + slot);
+    const status = document.getElementById('rs' + slot);
+    const approveInput = document.getElementById('approve-url' + slot);
+
+    if (!kw) { status.textContent = 'Enter a keyword first.'; return; }
+
+    status.style.color = 'rgba(255,255,255,0.4)';
+    status.textContent = 'Fetching…';
+
+    try {
+      const res  = await fetch('/admin/refetch-image?keyword=' + encodeURIComponent(kw));
+      const data = await res.json();
+
+      if (data.error) {
+        status.style.color = '#ff4444';
+        status.textContent = data.error;
+        return;
+      }
+
+      // Update preview
+      img.src = data.url;
+      img.style.display = 'block';
+      img.nextElementSibling.style.display = 'none'; // hide placeholder
+
+      // Sync into approve form so the new URL gets submitted
+      approveInput.value = data.url;
+
+      status.style.color = '#44ff99';
+      status.textContent = '✓ Updated';
+    } catch (e) {
+      status.style.color = '#ff4444';
+      status.textContent = 'Network error';
+    }
+  }
+</script>
 
 </body>
 </html>

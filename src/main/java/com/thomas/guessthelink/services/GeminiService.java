@@ -1,3 +1,5 @@
+//Bug Found: If rejected or generated, then I approve someting – it approves
+//Fix: Be able to modify the picture AFTER generation, so if the image is inappropriate I can change it without rejecting the whole question.
 package com.thomas.guessthelink.services;
 
 import org.springframework.beans.factory.annotation.Value;
