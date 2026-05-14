@@ -3,52 +3,54 @@ package com.thomas.guessthelink.security;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-// Tracks failed admin login attempts per IP.
-// After 5 failures, the IP is locked out for 30 minutes.
 @Service
 public class RateLimitService {
 
-    private static final int MAX_ATTEMPTS = 5;
-    private static final long LOCKOUT_SECONDS = 30 * 60; // 30 minutes
+    // How it works:
+    // We keep a small record per IP: how many failed attempts, and when the lockout expires.
+    // ConcurrentHashMap is thread-safe so multiple requests at once won't corrupt state.
+    // Nothing is stored in the DB — restarting the server resets all lockouts (fine for admin).
 
-    private final ConcurrentHashMap<String, Integer> attempts = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Instant> lockedUntil = new ConcurrentHashMap<>();
+    private static final int    MAX_ATTEMPTS    = 5;
+    private static final long   LOCKOUT_SECONDS = 30 * 60; // 30 minutes
 
-    public boolean isLocked(String ip) {
-        Instant until = lockedUntil.get(ip);
-        if (until == null) return false;
-        if (Instant.now().isAfter(until)) {
-            // Lockout expired — clear it
-            lockedUntil.remove(ip);
-            attempts.remove(ip);
-            return false;
-        }
-        return true;
+    private record Attempt(int count, Instant lockedUntil) {}
+
+    private final Map<String, Attempt> attempts = new ConcurrentHashMap<>();
+
+    /** Returns true if this IP is currently locked out. */
+    public boolean isBlocked(String ip) {
+        Attempt a = attempts.get(ip);
+        if (a == null) return false;
+        if (a.lockedUntil() != null && Instant.now().isBefore(a.lockedUntil())) return true;
+        // Lockout expired — clean up
+        if (a.lockedUntil() != null) attempts.remove(ip);
+        return false;
     }
 
+    /** Call this on every failed login attempt. */
     public void recordFailure(String ip) {
-        int count = attempts.merge(ip, 1, Integer::sum);
-        if (count >= MAX_ATTEMPTS) {
-            lockedUntil.put(ip, Instant.now().plusSeconds(LOCKOUT_SECONDS));
-        }
+        Attempt current = attempts.getOrDefault(ip, new Attempt(0, null));
+        int newCount = current.count() + 1;
+        Instant lockUntil = newCount >= MAX_ATTEMPTS
+            ? Instant.now().plusSeconds(LOCKOUT_SECONDS)
+            : null;
+        attempts.put(ip, new Attempt(newCount, lockUntil));
     }
 
-    public void reset(String ip) {
+    /** Call this on successful login to reset the counter. */
+    public void recordSuccess(String ip) {
         attempts.remove(ip);
-        lockedUntil.remove(ip);
     }
 
-    // Returns minutes remaining in the lockout (for showing in the error message)
-    public long getMinutesRemaining(String ip) {
-        Instant until = lockedUntil.get(ip);
-        if (until == null) return 0;
-        long seconds = until.getEpochSecond() - Instant.now().getEpochSecond();
-        return Math.max(0, (long) Math.ceil(seconds / 60.0));
-    }
-
-    public int getAttemptCount(String ip) {
-        return attempts.getOrDefault(ip, 0);
+    /** How many minutes remain in the lockout (for showing to the user). */
+    public long minutesRemaining(String ip) {
+        Attempt a = attempts.get(ip);
+        if (a == null || a.lockedUntil() == null) return 0;
+        long secs = Instant.now().until(a.lockedUntil(), java.time.temporal.ChronoUnit.SECONDS);
+        return Math.max(0, (secs + 59) / 60); // round up
     }
 }
