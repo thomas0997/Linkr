@@ -3,56 +3,120 @@
 <head>
 <meta charset="UTF-8">
 <title>Linkr — Admin Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;
-        display:flex;align-items:center;justify-content:center;min-height:100vh}
-    .card{background:rgba(18,0,9,0.95);border:0.5px solid rgba(204,34,102,0.25);
-        border-radius:20px;padding:48px 40px;width:100%;max-width:380px;text-align:center}
-    .logo{font-size:22px;font-weight:800;color:#cc2266;margin-bottom:8px}
-    h2{font-size:18px;font-weight:600;margin-bottom:6px}
-    .sub{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:32px}
-    .code-input{
-    width:100%;background:rgba(204,34,102,0.06);
-    border:0.5px solid rgba(204,34,102,0.3);border-radius:10px;
-    padding:16px;font-size:28px;font-weight:700;letter-spacing:12px;
-    color:#fff;text-align:center;outline:none;font-family:'Inter',sans-serif;
+    body{
+    background:#0d0007;font-family:'Inter',sans-serif;color:#fff;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
     }
-    .code-input:focus{border-color:#cc2266}
-    .btn{width:100%;margin-top:16px;background:#cc2266;border:none;border-radius:10px;
-        padding:14px;font-size:15px;font-weight:700;color:#fff;cursor:pointer}
-    .btn:hover{background:#ff2277}
-    .btn:disabled{opacity:0.4;cursor:not-allowed}
-    .err{color:#ff4444;font-size:13px;margin-top:16px}
-    .ok{color:#44ff99;font-size:13px;margin-top:16px}
+
+    .card{
+    background:rgba(18,0,9,0.95);
+    border:0.5px solid rgba(204,34,102,0.25);
+    border-radius:20px;padding:48px 40px;
+    width:100%;max-width:400px;text-align:center;
+    }
+
+    /* logo */
+    .logo{font-size:22px;font-weight:800;margin-bottom:28px;letter-spacing:-.5px}
+    .logo em{color:#cc2266;font-style:normal}
+
+    /* icon */
+    .lock-icon{
+    width:52px;height:52px;border-radius:50%;
+    background:rgba(204,34,102,0.12);
+    border:0.5px solid rgba(204,34,102,0.3);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 20px;font-size:22px;
+    }
+
+    h2{font-size:20px;font-weight:700;margin-bottom:6px}
+    .sub{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:32px;line-height:1.6}
+
+    /* code input */
+    .code-input{
+    width:100%;
+    background:rgba(204,34,102,0.06);
+    border:0.5px solid rgba(204,34,102,0.3);
+    border-radius:12px;
+    padding:16px;
+    font-size:28px;font-weight:700;
+    color:#fff;text-align:center;
+    letter-spacing:8px;
+    font-family:'Inter',sans-serif;
+    outline:none;
+    margin-bottom:16px;
+    transition:border-color .2s;
+    }
+    .code-input:focus{border-color:#cc2266;box-shadow:0 0 0 3px rgba(204,34,102,0.15)}
+    .code-input::placeholder{letter-spacing:4px;font-size:18px;color:rgba(255,255,255,0.15)}
+
+    /* error */
+    .error{
+    background:rgba(255,50,50,0.1);border:0.5px solid rgba(255,50,50,0.3);
+    border-radius:8px;padding:10px 14px;
+    font-size:13px;color:#ff6666;margin-bottom:16px;
+    }
+
+    /* submit */
+    .btn{
+    width:100%;background:linear-gradient(135deg,#ff2277,#cc0055);
+    border:none;border-radius:12px;padding:14px;
+    font-size:15px;font-weight:700;color:#fff;
+    cursor:pointer;font-family:'Inter',sans-serif;
+    transition:all .2s;margin-bottom:16px;
+    }
+    .btn:hover{box-shadow:0 4px 20px rgba(255,34,119,0.4)}
+
+    /* hint */
+    .hint{font-size:12px;color:rgba(255,255,255,0.25);line-height:1.6}
+    .hint strong{color:rgba(255,255,255,0.45)}
+
+    /* setup link */
+    .setup-link{
+    display:block;margin-top:20px;
+    font-size:12px;color:rgba(255,255,255,0.2);
+    text-decoration:none;
+    }
+    .setup-link:hover{color:rgba(204,34,102,0.6)}
 </style>
 </head>
 <body>
 <div class="card">
-<div class="logo">Link<span style="color:#fff">r</span></div>
-<h2>Admin Login</h2>
-<p class="sub">Enter the 6-digit code from Google Authenticator</p>
 
-<form method="POST" th:action="@{/admin/login-process}" id="loginForm">
-    <input class="code-input" type="text" name="code" id="code"
-        maxlength="6" placeholder="······" autocomplete="off"
-        inputmode="numeric" pattern="[0-9]{6}" required
-        th:disabled="${blocked}">
-    <button class="btn" type="submit" th:disabled="${blocked}">Verify ↗</button>
+<div class="logo">Link<em>r</em></div>
+
+<div class="lock-icon">🔐</div>
+<h2>Admin Access</h2>
+<p class="sub">Open Google Authenticator and enter<br>the 6-digit code for <strong>Linkr</strong>.</p>
+
+<!-- error message from Spring, only shown on bad code -->
+<div class="error" th:if="${error}" th:text="${error}"></div>
+
+<form method="POST" th:action="@{/admin/login}">
+    <input
+    class="code-input"
+    type="text"
+    name="code"
+    maxlength="6"
+    inputmode="numeric"
+    pattern="[0-9]{6}"
+    placeholder="000000"
+    autocomplete="one-time-code"
+    autofocus
+    required>
+    <button class="btn" type="submit">Verify →</button>
 </form>
 
-<p class="err" th:if="${error}" th:text="${error}"></p>
-<p class="ok"  th:if="${message}" th:text="${message}"></p>
-</div>
+<p class="hint">
+    Code changes every <strong>30 seconds</strong>.<br>
+    Make sure your phone clock is accurate.
+</p>
 
-<script>
-// Auto-submit when 6 digits are typed
-document.getElementById('code').addEventListener('input', function() {
-    if (this.value.replace(/\D/g, '').length === 6) {
-    this.value = this.value.replace(/\D/g, '');
-    document.getElementById('loginForm').submit();
-    }
-});
-</script>
+<a class="setup-link" href="/admin/setup">First time? Run setup →</a>
+
+</div>
 </body>
 </html>

@@ -2,21 +2,14 @@ package com.thomas.guessthelink.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.thomas.guessthelink.*;
 import com.thomas.guessthelink.services.*;
 import com.thomas.guessthelink.repository.*;
-import com.thomas.guessthelink.security.*;
-import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.List;
-import java.util.Map;
+import com.thomas.guessthelink.security.TotpService;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class AdminController {
@@ -25,19 +18,16 @@ public class AdminController {
     @Autowired UnsplashService unsplashService;
     @Autowired QuestionRepository questionRepo;
     @Autowired TotpService totpService;
-    @Autowired RateLimitService rateLimitService;
 
-    // Put this in application.properties: admin.totp.secret=YOUR_SECRET
-    // Leave blank until you run /admin/setup the first time.
     @Value("${admin.totp.secret:}")
     private String totpSecret;
 
-    // ── SETUP (one-time) ──────────────────────────────────────────────────────
+    // ── /admin/setup ──────────────────────────────────────────────────────────
 
     @GetMapping("/admin/setup")
     public String showSetup(Model model) {
-        if (totpSecret != null && !totpSecret.isBlank()) {
-            return "redirect:/admin/login"; // already set up
+        if (totpSecret != null && !totpSecret.isEmpty()) {
+            return "redirect:/admin/login";
         }
         String secret = totpService.generateSecret();
         String qrUrl  = totpService.getQRCodeImageUrl(secret, "admin", "Linkr");
@@ -46,131 +36,135 @@ public class AdminController {
         return "admin-setup";
     }
 
-    // ── LOGIN ─────────────────────────────────────────────────────────────────
+    // ── /admin/login ──────────────────────────────────────────────────────────
 
     @GetMapping("/admin/login")
-    public String showLogin(
-        @RequestParam(required = false) String error,
-        @RequestParam(required = false) String logout,
-        HttpServletRequest request,
-        Model model
-    ) {
-        String ip = request.getRemoteAddr();
-        if (rateLimitService.isBlocked(ip)) {
-            model.addAttribute("error", "Too many failed attempts. Try again in "
-                + rateLimitService.minutesRemaining(ip) + " minutes.");
-            model.addAttribute("blocked", true);
-            return "admin-login";
+    public String showAdminLogin(HttpSession session) {
+        if (Boolean.TRUE.equals(session.getAttribute("adminAuth"))) {
+            return "redirect:/admin";
         }
-        if (error != null)  model.addAttribute("error", "Invalid code. Try again.");
-        if (logout != null) model.addAttribute("message", "Logged out.");
         return "admin-login";
     }
 
-    @PostMapping("/admin/login-process")
-    public String processLogin(
-        @RequestParam String code,
-        HttpServletRequest request,
-        RedirectAttributes redirectAttrs
-    ) {
-        String ip = request.getRemoteAddr();
+    @PostMapping("/admin/login")
+    public String handleAdminLogin(
+            @RequestParam String code,
+            HttpSession session,
+            Model model) {
 
-        if (rateLimitService.isBlocked(ip)) {
-            redirectAttrs.addFlashAttribute("error", "Locked out. Try again later.");
-            return "redirect:/admin/login";
+        // ── DEBUG — remove these prints once login is working ──────────────
+        System.out.println("=== ADMIN LOGIN ATTEMPT ===");
+        System.out.println("Secret in properties : [" + totpSecret + "]");
+        System.out.println("Code entered by user : [" + code + "]");
+        System.out.println("Secret is empty?     : " + (totpSecret == null || totpSecret.isEmpty()));
+
+        boolean result = totpService.verify(totpSecret, code);
+        System.out.println("verify() returned    : " + result);
+        System.out.println("===========================");
+        // ──────────────────────────────────────────────────────────────────
+
+        if (totpSecret == null || totpSecret.isEmpty()) {
+            return "redirect:/admin/setup";
         }
 
-        if (totpSecret == null || totpSecret.isBlank()) {
-            redirectAttrs.addFlashAttribute("error", "No secret configured. Visit /admin/setup first.");
-            return "redirect:/admin/login";
+        if (result) {
+            session.setAttribute("adminAuth", true);
+            return "redirect:/admin";
         }
 
-        if (!totpService.verify(totpSecret, code.trim())) {
-            rateLimitService.recordFailure(ip);
-            return "redirect:/admin/login?error";
-        }
-
-        // Correct code — log in via Spring Security
-        rateLimitService.recordSuccess(ip);
-        var auth = new UsernamePasswordAuthenticationToken(
-            "admin", null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
-        );
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        request.getSession().setAttribute(
-            "SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext()
-        );
-
-        return "redirect:/admin";
+        model.addAttribute("error", "Invalid code — try again.");
+        return "admin-login";
     }
 
-    // ── ADMIN PANEL ───────────────────────────────────────────────────────────
+    // ── /admin (panel) ────────────────────────────────────────────────────────
 
     @GetMapping("/admin")
-    public String showAdmin(Model model) {
-        if (!model.containsAttribute("message")) {
-            model.addAttribute("message", "Welcome to the admin panel.");
+    public String showAdmin(Model model, HttpSession session) {
+        if (!Boolean.TRUE.equals(session.getAttribute("adminAuth"))) {
+            return "redirect:/admin/login";
         }
+        model.addAttribute("message", "Welcome to the admin panel.");
         return "admin";
     }
 
+    // ── Question generation ───────────────────────────────────────────────────
+
     @PostMapping("/admin/generate")
-    public String generateQuestion(Model model) {
+    public String generateQuestion(Model model, HttpSession session) {
+        if (!Boolean.TRUE.equals(session.getAttribute("adminAuth"))) {
+            return "redirect:/admin/login";
+        }
         try {
             GeneratedQuestion q = geminiService.generateQuestion();
+
+            System.out.println("=== GEMINI OUTPUT ===");
+            System.out.println("Answer: "   + q.getAnswer());
+            System.out.println("Keyword1: " + q.getImageKeyword1());
+            System.out.println("Keyword2: " + q.getImageKeyword2());
+            System.out.println("Keyword3: " + q.getImageKeyword3());
+            System.out.println("Clue1: "    + q.getClue1());
+
             String img1 = unsplashService.getImageUrl(q.getImageKeyword1());
             String img2 = unsplashService.getImageUrl(q.getImageKeyword2());
             String img3 = unsplashService.getImageUrl(q.getImageKeyword3());
+
+            System.out.println("=== UNSPLASH OUTPUT ===");
+            System.out.println("Image1: " + img1);
+            System.out.println("Image2: " + img2);
+            System.out.println("Image3: " + img3);
+
             q.setImageUrl1(img1);
             q.setImageUrl2(img2);
             q.setImageUrl3(img3);
+
             model.addAttribute("generated", q);
             model.addAttribute("message", "Review the question below.");
+
         } catch (Exception e) {
+            System.out.println("=== ERROR ===");
             e.printStackTrace();
             model.addAttribute("error", "Generation failed: " + e.getMessage());
         }
         return "admin";
     }
 
-    @PostMapping("/admin/regenerate")
-    public String regenerateQuestion(Model model) {
-        return generateQuestion(model);
-    }
-
     @PostMapping("/admin/approve")
     public String approveQuestion(
-        @RequestParam String answer,
-        @RequestParam String imageUrl1,
-        @RequestParam String imageUrl2,
-        @RequestParam String imageUrl3,
-        @RequestParam String clue1,
-        @RequestParam String clue2,
-        @RequestParam String clue3,
-        @RequestParam int levelNumber,
-        RedirectAttributes redirectAttrs
-    ) {
+            @RequestParam String answer,
+            @RequestParam String imageUrl1,
+            @RequestParam String imageUrl2,
+            @RequestParam String imageUrl3,
+            @RequestParam String clue1,
+            @RequestParam String clue2,
+            @RequestParam String clue3,
+            @RequestParam int levelNumber,
+            Model model,
+            HttpSession session) {
+
+        if (!Boolean.TRUE.equals(session.getAttribute("adminAuth"))) {
+            return "redirect:/admin/login";
+        }
         Question q = new Question(clue1, clue2, clue3, imageUrl1, imageUrl2, imageUrl3, answer, levelNumber);
         questionRepo.save(q);
-        redirectAttrs.addFlashAttribute("message",
-            "✓ Saved to DB — Level " + levelNumber + " | Answer: \u201c" + answer + "\u201d");
-        return "redirect:/admin";
+        model.addAttribute("message", "✓ Question saved to DB for Level " + levelNumber);
+        return "admin";
     }
 
     @PostMapping("/admin/reject")
-    public String rejectQuestion(RedirectAttributes redirectAttrs) {
-        redirectAttrs.addFlashAttribute("message", "Question rejected. Generate a new one.");
-        return "redirect:/admin";
+    public String rejectQuestion(Model model, HttpSession session) {
+        if (!Boolean.TRUE.equals(session.getAttribute("adminAuth"))) return "redirect:/admin/login";
+        model.addAttribute("message", "Question rejected. Generate a new one.");
+        return "admin";
     }
 
-    @GetMapping("/admin/refetch-image")
-    @ResponseBody
-    public Map<String, String> refetchImage(@RequestParam String keyword) {
-        try {
-            String url = unsplashService.getImageUrl(keyword);
-            if (url == null || url.isEmpty()) return Map.of("error", "No image found for: " + keyword);
-            return Map.of("url", url);
-        } catch (Exception e) {
-            return Map.of("error", "Unsplash error: " + e.getMessage());
-        }
+    @PostMapping("/admin/regenerate")
+    public String regenerateQuestion(Model model, HttpSession session) {
+        return generateQuestion(model, session);
+    }
+
+    @PostMapping("/admin/logout")
+    public String adminLogout(HttpSession session) {
+        session.removeAttribute("adminAuth");
+        return "redirect:/admin/login";
     }
 }

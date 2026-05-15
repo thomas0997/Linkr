@@ -1,6 +1,5 @@
 package com.thomas.guessthelink.security;
 
-
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -14,52 +13,35 @@ import java.time.Instant;
 @Service
 public class TotpService {
 
-    // ── Core TOTP (RFC 6238) — no external library needed ────────────────────
-    //
-    // How it works:
-    //  1. Convert the current time into a 30-second "window" number
-    //  2. HMAC-SHA1(secret_bytes, window_as_8_bytes)  → 20-byte hash
-    //  3. Pick 4 bytes from the hash (dynamic truncation) → 6-digit number
-    //
-    // Your phone and the server both do this math with the same secret → same code.
+    // Changed from 30 seconds to 3600 seconds (1 hour)
+    private static final long PERIOD = 3600;
 
     private int generateCode(byte[] secret, long timeWindow) throws Exception {
-        // Pack the window counter into 8 bytes (big-endian)
         byte[] msg = ByteBuffer.allocate(8).putLong(timeWindow).array();
-
-        // HMAC-SHA1
         Mac mac = Mac.getInstance("HmacSHA1");
         mac.init(new SecretKeySpec(secret, "HmacSHA1"));
         byte[] hash = mac.doFinal(msg);
-
-        // Dynamic truncation: low 4 bits of last byte = offset
         int offset = hash[hash.length - 1] & 0x0F;
-
-        // Read 4 bytes from that offset, mask the sign bit, mod 1_000_000 → 6 digits
-
         int code = ((hash[offset]     & 0x7F) << 24)
                 | ((hash[offset + 1] & 0xFF) << 16)
                 | ((hash[offset + 2] & 0xFF) << 8)
-                | (hash[offset + 3] & 0xFF);
-
+                |  (hash[offset + 3] & 0xFF);
         return code % 1_000_000;
     }
 
-    /**
-     * Verifies a 6-digit code. Accepts current window ± 1 to handle clock drift.
-     */
     public boolean verify(String base32Secret, String userCode) {
         if (base32Secret == null || userCode == null) return false;
-        userCode = userCode.replaceAll("\\s", ""); // strip accidental spaces
+        userCode = userCode.replaceAll("\\s", "");
         if (userCode.length() != 6) return false;
 
         try {
             byte[] secret = base32Decode(base32Secret);
-            long window = Instant.now().getEpochSecond() / 30;
+            long window = Instant.now().getEpochSecond() / PERIOD;
 
-            // Check current window and ±1 either side (handles up to 30s clock drift)
+            // Allow ±1 window (±1 hour) for clock drift
             for (long w = window - 1; w <= window + 1; w++) {
                 int expected = generateCode(secret, w);
+                System.out.println("[TOTP] window=" + w + " expected=" + String.format("%06d", expected));
                 if (String.format("%06d", expected).equals(userCode)) return true;
             }
             return false;
@@ -70,31 +52,22 @@ public class TotpService {
         }
     }
 
-    /**
-     * Generates a random Base32 secret key. Call once during /admin/setup.
-     */
     public String generateSecret() {
         byte[] bytes = new byte[20];
         new SecureRandom().nextBytes(bytes);
         return base32Encode(bytes);
     }
 
-    /**
-     * Returns a Google Charts URL that renders the QR code as a scannable PNG.
-     * Use as <img th:src="${qrUrl}"> on the setup page.
-     */
     public String getQRCodeImageUrl(String secret, String account, String issuer) {
+        // period=3600 tells Google Authenticator to use 1-hour windows
         String otpauth = "otpauth://totp/"
-            + URLEncoder.encode(issuer + ":" + account, StandardCharsets.UTF_8)
+            + issuer + ":" + account
             + "?secret=" + secret
             + "&issuer=" + URLEncoder.encode(issuer, StandardCharsets.UTF_8)
-            + "&algorithm=SHA1&digits=6&period=30";
-        return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data="
+            + "&algorithm=SHA1&digits=6&period=3600";
+        return "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data="
             + URLEncoder.encode(otpauth, StandardCharsets.UTF_8);
     }
-
-    // ── Base32 (RFC 4648) ────────────────────────────────────────────────────
-    // Google Authenticator uses Base32, not Base64.
 
     private static final String B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
