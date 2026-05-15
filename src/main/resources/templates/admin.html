@@ -164,8 +164,9 @@
     <!-- Reject / Regenerate -->
     <div class="actions" style="margin-top:10px">
       <form method="POST" th:action="@{/admin/reject}" style="display:inline">
+        <input type="hidden" name="answer" th:value="${generated != null ? generated.answer : ''}">
         <button class="btn danger" type="submit">✗ Reject</button>
-      </form>
+    </form>
       <form method="POST" th:action="@{/admin/regenerate}" style="display:inline">
         <button class="btn secondary" type="submit">↺ Regenerate</button>
       </form>

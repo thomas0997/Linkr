@@ -1,0 +1,10 @@
+groq.api.key=YOUR_GROQ_KEY_HERE
+groq.api.url=https://api.groq.com/openai/v1/chat/completions
+
+unsplash.api.key=YOUR_UNSPLASH_KEY_HERE
+unsplash.api.url=https://api.unsplash.com/search/photos
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/yourdb
+spring.datasource.username=youruser
+spring.datasource.password=yourpassword
+spring.jpa.hibernate.ddl-auto=update
