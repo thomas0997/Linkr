@@ -130,48 +130,70 @@
       <label>Original Keywords</label>
       <span th:text="${generated.imageKeyword1 + ' | ' + generated.imageKeyword2 + ' | ' + generated.imageKeyword3}"></span>
     </div>
+    <!-- ── Approve form wraps editable fields so they submit directly ── -->
+    <form method="POST" th:action="@{/admin/approve}" id="approve-form">
 
-    <!-- Answer -->
-    <div class="field">
-      <label>Answer</label>
-      <span th:text="${generated.answer}"></span>
-    </div>
-
-    <!-- Clues -->
-    <div class="field"><label>Clue 1</label><span th:text="${generated.clue1}"></span></div>
-    <div class="field"><label>Clue 2</label><span th:text="${generated.clue2}"></span></div>
-    <div class="field"><label>Clue 3</label><span th:text="${generated.clue3}"></span></div>
-
-    <!-- ── Approve form ── -->
-    <!-- imageUrl1/2/3 are hidden inputs; JS keeps them in sync when admin re-fetches an image -->
-    <form method="POST" th:action="@{/admin/approve}" id="approve-form" style="display:inline">
-      <input type="hidden" name="answer"    th:value="${generated.answer}">
-      <input type="hidden" name="imageUrl1" id="approve-url1" th:value="${generated.imageUrl1}">
-      <input type="hidden" name="imageUrl2" id="approve-url2" th:value="${generated.imageUrl2}">
-      <input type="hidden" name="imageUrl3" id="approve-url3" th:value="${generated.imageUrl3}">
-      <input type="hidden" name="clue1"     th:value="${generated.clue1}">
-      <input type="hidden" name="clue2"     th:value="${generated.clue2}">
-      <input type="hidden" name="clue3"     th:value="${generated.clue3}">
-      <div class="actions">
-        <div>
-          <label style="font-size:12px;color:rgba(255,255,255,0.4)">Level:</label>
-          <input class="level-input" type="number" name="levelNumber" min="1" value="1">
-        </div>
-        <button class="btn" type="submit">✓ Approve</button>
+      <!-- Answer — editable -->
+      <div class="field">
+        <label>Answer</label>
+        <input class="keyword-input" 
+              style="width:100%;font-size:14px;padding:8px 12px"
+              type="text" 
+              name="answer" 
+              id="editable-answer"
+              th:value="${generated.answer}">
       </div>
-    </form>
 
-    <!-- Reject / Regenerate -->
-    <div class="actions" style="margin-top:10px">
-      <form method="POST" th:action="@{/admin/reject}" style="display:inline">
-        <input type="hidden" name="answer" th:value="${generated != null ? generated.answer : ''}">
-        <button class="btn danger" type="submit">✗ Reject</button>
-    </form>
-      <form method="POST" th:action="@{/admin/regenerate}" style="display:inline">
-        <button class="btn secondary" type="submit">↺ Regenerate</button>
-      </form>
+      <!-- Clues — editable -->
+      <div class="field">
+        <label>Clue 1</label>
+        <input class="keyword-input" 
+              style="width:100%" 
+              type="text" 
+              name="clue1" 
+              th:value="${generated.clue1}">
+      </div>
+      <div class="field">
+        <label>Clue 2</label>
+        <input class="keyword-input" 
+              style="width:100%" 
+              type="text" 
+              name="clue2" 
+              th:value="${generated.clue2}">
+      </div>
+      <div class="field">
+        <label>Clue 3</label>
+        <input class="keyword-input" 
+              style="width:100%" 
+              type="text" 
+              name="clue3" 
+              th:value="${generated.clue3}">
+      </div>
+
+  <!-- Image URLs — hidden, JS keeps these in sync via refetch() -->
+  <input type="hidden" name="imageUrl1" id="approve-url1" th:value="${generated.imageUrl1}">
+  <input type="hidden" name="imageUrl2" id="approve-url2" th:value="${generated.imageUrl2}">
+  <input type="hidden" name="imageUrl3" id="approve-url3" th:value="${generated.imageUrl3}">
+
+  <div class="actions" style="margin-top:16px">
+    <div>
+      <label style="font-size:12px;color:rgba(255,255,255,0.4)">Level:</label>
+      <input class="level-input" type="number" name="levelNumber" min="1" value="1">
     </div>
+    <button class="btn" type="submit">✓ Approve</button>
+  </div>
 
+</form>
+  <!-- Reject / Regenerate -->
+  <div class="actions" style="margin-top:10px">
+    <form method="POST" th:action="@{/admin/reject}" style="display:inline" id="reject-form">
+      <input type="hidden" name="answer" id="reject-answer-input">
+      <button class="btn danger" type="button" onclick="submitReject()">✗ Reject</button>
+    </form>
+    <form method="POST" th:action="@{/admin/regenerate}" style="display:inline">
+      <button class="btn secondary" type="submit">↺ Regenerate</button>
+    </form>
+  </div>
   </div><!-- /card -->
 
 <script>
@@ -212,6 +234,13 @@
       status.style.color = '#ff4444';
       status.textContent = 'Network error';
     }
+  }
+
+    // Copies the current (possibly edited) answer into the reject form before submitting
+  function submitReject() {
+    const answer = document.getElementById('editable-answer').value;
+    document.getElementById('reject-answer-input').value = answer;
+    document.getElementById('reject-form').submit();
   }
 </script>
 

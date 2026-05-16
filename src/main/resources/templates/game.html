@@ -341,6 +341,22 @@
         <!-- Clue display -->
         <div class="clue-display" id="clue-display">Use a clue to reveal a hint....</div>
 
+
+        <!-- Letter reveal display — shown once first letter clue is used -->
+        <div id="letter-display" style="
+        display:none;
+        width:100%;max-width:500px;
+        text-align:center;
+        font-family:'Inter',sans-serif;
+        font-size:22px;font-weight:700;
+        letter-spacing:12px;
+        color:#fff;
+        background:rgba(204,34,102,0.07);
+        border:0.5px solid rgba(204,34,102,0.2);
+        border-radius:10px;
+        padding:14px 20px;
+        "></div>
+
         <!-- Guess panel -->
         <div class="panel">
             <div class="panel-label">Your Guess</div>
@@ -352,10 +368,18 @@
                 <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
             </div>
             <div class="tries-label" id="tries-label">1/10 Tries</div>
-            <div class="clue-row">
-                <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
-                <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
-                <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
+           <div class="clue-row">
+            <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
+            <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
+            <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
+            </div>
+
+            <!-- Letter clue row — fixed 10 coins, reveals one letter at a time -->
+            <div style="display:flex;justify-content:center;margin-top:8px">
+            <div class="clue-btn" id="letter-btn" onclick="useLetterClue()"
+                style="max-width:160px;justify-content:center">
+                Letter <span class="clue-cost" id="cc-letter">| 10 🪙</span>
+            </div>
             </div>
         </div>
     </div>
@@ -388,6 +412,90 @@
     });
     }
 
+    // ── Letter clue ──
+    const LETTER_COST = 10;
+    const answerChars = correctAnswer.split(''); // e.g. ['c','a','p','i','t','a','l',' ','c','i','t','i','e','s']
+    let revealedPositions = new Set();
+
+    // Build initial blank pattern: letters → underscore, spaces → space
+    function buildPattern() {
+    return answerChars.map((ch, i) =>
+        ch === ' ' ? ' ' : (revealedPositions.has(i) ? ch.toUpperCase() : '_')
+    ).join('');
+    }
+
+    function updateLetterDisplay() {
+    const display = document.getElementById('letter-display');
+    display.style.display = 'block';
+    // Add spaces between chars for readability, but keep real spaces wider
+    display.textContent = answerChars.map((ch, i) => {
+        if (ch === ' ') return '   '; // wider gap for word breaks
+        return revealedPositions.has(i) ? ch.toUpperCase() : '_';
+    }).join(' ');
+    }
+
+    function updateLetterCoinColor() {
+    const el = document.getElementById('cc-letter');
+    el.className = 'clue-cost ' + (coins >= LETTER_COST ? 'affordable' : 'too-expensive');
+    }
+
+    function useLetterClue() {
+    if (submitted) return;
+
+    const btn = document.getElementById('letter-btn');
+    if (btn.classList.contains('disabled')) return;
+
+    if (coins < LETTER_COST) {
+        showMsg('Not enough coins for a letter!', '#ff4444');
+        return;
+    }
+
+    // Find all unrevealed non-space positions
+    const unrevealed = answerChars
+        .map((ch, i) => ({ ch, i }))
+        .filter(({ ch, i }) => ch !== ' ' && !revealedPositions.has(i));
+
+    if (unrevealed.length === 0) {
+        showMsg('All letters already revealed!', '#ff4444');
+        return;
+    }
+
+    // Deduct coins server-side first
+    fetch('/use-letter-clue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) {
+        showMsg('Not enough coins!', '#ff4444');
+        return;
+        }
+
+        coins = data.coins;
+        document.getElementById('coin-count').textContent = coins;
+        updateCoinColors();
+        updateLetterCoinColor();
+
+        // Pick a random unrevealed letter and reveal it
+        const pick = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+        revealedPositions.add(pick.i);
+        updateLetterDisplay();
+
+        // Disable button if no more letters to reveal
+        if (unrevealed.length - 1 === 0) {
+        btn.classList.add('disabled');
+        btn.style.pointerEvents = 'none';
+        }
+    });
+    }
+
+    // Hook into updateCoinColors so letter button also updates
+    const _origUpdateCoinColors = updateCoinColors;
+    updateCoinColors = function() {
+    _origUpdateCoinColors();
+    updateLetterCoinColor();
+    };
 
     const params = new URLSearchParams(window.location.search);
         if (params.get('noNextLevel') === 'true') {

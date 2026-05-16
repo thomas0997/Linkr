@@ -55,6 +55,22 @@ public class GameController {
         return "redirect:/home";
     }
 
+    @PostMapping("/use-letter-clue")
+    @ResponseBody
+    public Map<String, Object> handleLetterClue(HttpSession session) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        Player player = playerService.getPlayerId(playerId);
+        int cost = 10;
+
+        if (player.getCoins() < cost) {
+            return Map.of("success", false, "coins", player.getCoins());
+        }
+
+        playerService.addCoins(playerId, (long) -cost);
+        player = playerService.getPlayerId(playerId);
+        return Map.of("success", true, "coins", player.getCoins());
+    }
+
    @GetMapping("/game")
     public String showGame(Model model, HttpSession session) {
         Long playerId = (Long) session.getAttribute("playerId");
