@@ -5,15 +5,16 @@ public class GeneratedQuestion {
     private String imageUrl1, imageUrl2, imageUrl3;
     private String imageKeyword1, imageKeyword2, imageKeyword3;
     private String clue1, clue2, clue3;
+    private String reasoning1, reasoning2, reasoning3; // ← ADD
     private int levelNumber;
 
-    
     public GeneratedQuestion() {}
 
-    public GeneratedQuestion(String answer, 
-                              String imageUrl1, String imageUrl2, String imageUrl3,
-                              String imageKeyword1, String imageKeyword2, String imageKeyword3,
-                              String clue1, String clue2, String clue3) {
+    public GeneratedQuestion(String answer,
+        String imageUrl1, String imageUrl2, String imageUrl3,
+        String imageKeyword1, String imageKeyword2, String imageKeyword3,
+        String clue1, String clue2, String clue3,
+        String reasoning1, String reasoning2, String reasoning3) { // ← ADD
         this.answer = answer;
         this.imageUrl1 = imageUrl1;
         this.imageUrl2 = imageUrl2;
@@ -24,22 +25,28 @@ public class GeneratedQuestion {
         this.clue1 = clue1;
         this.clue2 = clue2;
         this.clue3 = clue3;
+        this.reasoning1 = reasoning1; // ← ADD
+        this.reasoning2 = reasoning2; // ← ADD
+        this.reasoning3 = reasoning3; // ← ADD
     }
 
-    // getters and setters for all fields
-    public String getAnswer(){ return answer; }
-    public String getImageUrl1(){ return imageUrl1; }
-    public String getImageUrl2(){ return imageUrl2; }
-    public String getImageUrl3(){ return imageUrl3; }
+    public String getAnswer()       { return answer; }
+    public String getImageUrl1()    { return imageUrl1; }
+    public String getImageUrl2()    { return imageUrl2; }
+    public String getImageUrl3()    { return imageUrl3; }
     public String getImageKeyword1(){ return imageKeyword1; }
     public String getImageKeyword2(){ return imageKeyword2; }
     public String getImageKeyword3(){ return imageKeyword3; }
-    public String getClue1(){ return clue1; }
-    public String getClue2(){ return clue2; }
-    public String getClue3(){ return clue3; }
-    public int getLevelNumber(){ return levelNumber; }
+    public String getClue1()        { return clue1; }
+    public String getClue2()        { return clue2; }
+    public String getClue3()        { return clue3; }
+    public String getReasoning1()   { return reasoning1; } // ← ADD
+    public String getReasoning2()   { return reasoning2; } // ← ADD
+    public String getReasoning3()   { return reasoning3; } // ← ADD
+    public int getLevelNumber()     { return levelNumber; }
+
     public void setLevelNumber(int levelNumber){ this.levelNumber = levelNumber; }
-    public void setImageUrl1(String imageUrl1){ this.imageUrl1 = imageUrl1; }
-    public void setImageUrl2(String imageUrl2){ this.imageUrl2 = imageUrl2; }
-    public void setImageUrl3(String imageUrl3){ this.imageUrl3 = imageUrl3; }
+    public void setImageUrl1(String imageUrl1) { this.imageUrl1 = imageUrl1; }
+    public void setImageUrl2(String imageUrl2) { this.imageUrl2 = imageUrl2; }
+    public void setImageUrl3(String imageUrl3) { this.imageUrl3 = imageUrl3; }
 }

@@ -1,5 +1,7 @@
 package com.thomas.guessthelink.controller;
-
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.*;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -7,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import com.thomas.guessthelink.*;
 import com.thomas.guessthelink.services.*;
 import com.thomas.guessthelink.repository.*;
+import java.util.Map;
+
 
 @Controller
 public class AdminController {
@@ -42,6 +46,20 @@ public class AdminController {
             model.addAttribute("error", "Generation failed: " + e.getMessage());
         }
         return "admin";
+    }
+
+    @PostMapping("/admin/upload-image")
+    @ResponseBody
+    public Map<String, Object> uploadImage(@RequestParam MultipartFile file) {
+        try {
+            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path uploadDir = Paths.get("src/main/resources/static/uploads");
+            Files.createDirectories(uploadDir);
+            Files.write(uploadDir.resolve(filename), file.getBytes());
+            return Map.of("url", "/uploads/" + filename);
+        } catch (Exception e) {
+            return Map.of("error", "Upload failed: " + e.getMessage());
+        }
     }
 
     @PostMapping("/admin/approve")

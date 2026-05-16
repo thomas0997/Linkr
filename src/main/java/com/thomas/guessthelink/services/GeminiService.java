@@ -72,7 +72,17 @@ public class GeminiService {
             "- Provide 3 clues that get progressively easier. The last clue should almost give it away.\n" +
             rejectedLine +   // ← injected here
             "Return ONLY valid JSON, no markdown, no code fences, no explanation. Exactly this structure:\n" +
-            "{\"answer\":\"the link\",\"imageKeyword1\":\"search term for image 1\",\"imageKeyword2\":\"search term for image 2\",\"imageKeyword3\":\"search term for image 3\",\"clue1\":\"vague category hint\",\"clue2\":\"narrows it down\",\"clue3\":\"almost gives it away\"}";
+            "Return ONLY valid JSON, no markdown, no code fences, no explanation. Exactly this structure:\n" +
+            "{\"answer\":\"the link\"," +
+            "\"imageKeyword1\":\"search term for image 1\"," +
+            "\"imageKeyword2\":\"search term for image 2\"," +
+            "\"imageKeyword3\":\"search term for image 3\"," +
+            "\"reasoning1\":\"why image 1 connects to the answer through wordplay\"," +  // ← ADD
+            "\"reasoning2\":\"why image 2 connects to the answer through wordplay\"," +  // ← ADD
+            "\"reasoning3\":\"why image 3 connects to the answer through wordplay\"," +  // ← ADD
+            "\"clue1\":\"vague category hint\"," +
+            "\"clue2\":\"narrows it down\"," +
+            "\"clue3\":\"almost gives it away\"}";
 
         String requestBody =
             "{\"model\":\"llama-3.3-70b-versatile\"," +
@@ -89,29 +99,34 @@ public class GeminiService {
         return parseResponse(response.body());
     }
 
-    private GeneratedQuestion parseResponse(String rawResponse) {
-        String content = extractJsonString(rawResponse, "content");
+        private GeneratedQuestion parseResponse(String rawResponse) {
+            String content = extractJsonString(rawResponse, "content");
+            if (content == null || content.isEmpty()) {
+                throw new RuntimeException("Groq returned an unparseable response.");
+            }
+            content = content.replace("```json", "").replace("```", "").trim();
 
-        if (content == null || content.isEmpty()) {
-            throw new RuntimeException("Groq returned an unparseable response.");
+            String answer     = extractJsonString(content, "answer");
+            String keyword1   = extractJsonString(content, "imageKeyword1");
+            String keyword2   = extractJsonString(content, "imageKeyword2");
+            String keyword3   = extractJsonString(content, "imageKeyword3");
+            String clue1      = extractJsonString(content, "clue1");
+            String clue2      = extractJsonString(content, "clue2");
+            String clue3      = extractJsonString(content, "clue3");
+            String reasoning1 = extractJsonString(content, "reasoning1"); // ← ADD
+            String reasoning2 = extractJsonString(content, "reasoning2"); // ← ADD
+            String reasoning3 = extractJsonString(content, "reasoning3"); // ← ADD
+
+            if (answer == null || answer.isEmpty()) {
+                throw new RuntimeException("Groq JSON missing 'answer' field. Content: " + content);
+            }
+
+            return new GeneratedQuestion(
+                answer, "", "", "", keyword1, keyword2, keyword3,
+                clue1, clue2, clue3,
+                reasoning1, reasoning2, reasoning3  // ← ADD
+            );
         }
-
-        content = content.replace("```json", "").replace("```", "").trim();
-
-        String answer   = extractJsonString(content, "answer");
-        String keyword1 = extractJsonString(content, "imageKeyword1");
-        String keyword2 = extractJsonString(content, "imageKeyword2");
-        String keyword3 = extractJsonString(content, "imageKeyword3");
-        String clue1    = extractJsonString(content, "clue1");
-        String clue2    = extractJsonString(content, "clue2");
-        String clue3    = extractJsonString(content, "clue3");
-
-        if (answer == null || answer.isEmpty()) {
-            throw new RuntimeException("Groq JSON missing 'answer' field. Content: " + content);
-        }
-
-        return new GeneratedQuestion(answer, "", "", "", keyword1, keyword2, keyword3, clue1, clue2, clue3);
-    }
 
     private String escapeForJson(String text) {
         return text

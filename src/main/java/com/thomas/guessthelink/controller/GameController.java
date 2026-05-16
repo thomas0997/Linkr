@@ -7,8 +7,14 @@ import com.thomas.guessthelink.services.*;
 import com.thomas.guessthelink.repository.GameProgressRepository;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.*;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 
 
@@ -92,17 +98,43 @@ public class GameController {
         return "game";
     }
 
-    @PostMapping("/guest")
-    public String handleGuest(HttpSession session) {
-        long number = playerService.countGuests() + 1;
-        String guestName = String.format("Guest[%02d]", number);
-        Player guest = new Player(guestName, 0L, 1);
-        playerService.savePlayer(guest);
-        session.setAttribute("playerId", guest.getId());
-        return "redirect:/home";
-    }
+        @PostMapping("/guest")
+        public String handleGuest(HttpSession session, 
+                                HttpServletRequest request, 
+                                HttpServletResponse response) {
+            // Check if this device already has a guest cookie
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("guestId".equals(cookie.getName())) {
+                        try {
+                            Long existingId = Long.parseLong(cookie.getValue());
+                            Player existing = playerService.getPlayerId(existingId);
+                            if (existing != null && existing.getUsername().startsWith("Guest[")) {
+                                // Restore their session — same guest, same progress
+                                session.setAttribute("playerId", existingId);
+                                return "redirect:/home";
+                            }
+                        } catch (NumberFormatException e) { /* bad cookie, ignore */ }
+                    }
+                }
+            }
 
+            // No valid cookie — create a fresh numbered guest
+            long number = playerService.countGuests() + 1;
+            String guestName = String.format("Guest[%02d]", number);
+            Player guest = new Player(guestName, 0L, 1);
+            playerService.savePlayer(guest);
 
+            // Save their id in a cookie — lasts 30 days
+            Cookie guestCookie = new Cookie("guestId", String.valueOf(guest.getId()));
+            guestCookie.setMaxAge(30 * 24 * 60 * 60);
+            guestCookie.setPath("/");
+            response.addCookie(guestCookie);
+
+            session.setAttribute("playerId", guest.getId());
+            return "redirect:/home";
+        }
     @PostMapping("/clue")
     public String handleClue(@RequestParam int clueNumber, HttpSession session, Model model){
         
@@ -207,5 +239,28 @@ public class GameController {
         return Map.of("saved", true);
     }
 
+    @GetMapping("/about")
+    public String showAbout(HttpSession session, Model model) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        if (playerId == null) return "redirect:/";
+        model.addAttribute("player", playerService.getPlayerId(playerId));
+        return "about";
+    }
+
+    @GetMapping("/tutorial")
+    public String showTutorial(HttpSession session, Model model) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        if (playerId == null) return "redirect:/";
+        model.addAttribute("player", playerService.getPlayerId(playerId));
+        return "tutorial";
+    }
+
+    @GetMapping("/profile")
+    public String showProfile(HttpSession session, Model model) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        if (playerId == null) return "redirect:/";
+        model.addAttribute("player", playerService.getPlayerId(playerId));
+        return "profile";
+    }
 }
 

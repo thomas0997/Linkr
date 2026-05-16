@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1200">
+  <title>Linkr — About</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;min-height:100vh}
+    .header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;background:rgba(10,0,6,0.8);backdrop-filter:blur(16px);border-bottom:0.5px solid rgba(204,34,102,0.15)}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff}
+    .logo-box{width:30px;height:30px;border-radius:8px;background:#cc2266;display:flex;align-items:center;justify-content:center}
+    .logo-name{font-size:16px;font-weight:800}
+    .logo-name em{color:#cc2266;font-style:normal}
+    .main{max-width:700px;margin:0 auto;padding:100px 24px 60px}
+    h1{font-size:36px;font-weight:800;margin-bottom:8px}
+    h1 em{color:#cc2266;font-style:normal}
+    .subtitle{color:rgba(255,255,255,0.4);font-size:14px;margin-bottom:48px}
+    .section{margin-bottom:40px}
+    .section h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#cc2266;margin-bottom:12px}
+    .section p{font-size:15px;color:rgba(255,255,255,0.7);line-height:1.8}
+    .placeholder{background:rgba(204,34,102,0.06);border:0.5px dashed rgba(204,34,102,0.3);border-radius:12px;padding:20px;color:rgba(255,255,255,0.2);font-size:13px;font-style:italic;text-align:center}
+    .divider{height:0.5px;background:rgba(204,34,102,0.15);margin:32px 0}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a class="logo" href="/home">
+    <div class="logo-box">
+      <svg viewBox="0 0 15 15" fill="none" width="15" height="15">
+        <circle cx="4" cy="7.5" r="2.5" fill="#fff" opacity=".9"/>
+        <circle cx="11" cy="4" r="2.5" fill="#fff" opacity=".6"/>
+        <circle cx="11" cy="11" r="2.5" fill="#fff" opacity=".6"/>
+        <line x1="6.3" y1="6.1" x2="8.8" y2="4.9" stroke="#fff" stroke-width=".9" opacity=".4"/>
+        <line x1="6.3" y1="8.9" x2="8.8" y2="10.1" stroke="#fff" stroke-width=".9" opacity=".4"/>
+      </svg>
+    </div>
+    <div class="logo-name">Link<em>r</em></div>
+  </a>
+</div>
+
+<div class="main">
+  <h1>About Link<em>r</em></h1>
+  <p class="subtitle">The story, the people, the why.</p>
+
+  <div class="section">
+    <h2>What is Linkr?</h2>
+    <p class="placeholder">[ Write what Linkr is — your elevator pitch. What makes it different from other puzzle games? ]</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <h2>How it started</h2>
+    <p class="placeholder">[ Your origin story — where did the idea come from? MoreSidemen inspiration, etc. ]</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <h2>The team</h2>
+    <p class="placeholder">[ Who built this? Just you? Add your name, links, socials. ]</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <h2>Contact</h2>
+    <p class="placeholder">[ Email, Twitter/X, GitHub, Discord — however you want people to reach you. ]</p>
+  </div>
+</div>
+
+</body>
+</html>
