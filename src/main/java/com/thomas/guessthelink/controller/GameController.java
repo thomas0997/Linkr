@@ -92,18 +92,16 @@ public class GameController {
         return "game";
     }
 
-    @PostMapping("/guess")
-    public String handleGuess(@RequestParam String guess, 
-    @RequestParam int tries, HttpSession session, Model model){
-
-        Long playerId = (Long) session.getAttribute("playerId");  
-        Player player = playerService.getPlayerId(playerId);
-        GuessResult result = gameService.submitGuess(playerId, player.getCurrentLevel(), guess, tries, 0);
-
-        model.addAttribute("result", result);
-        model.addAttribute("player", playerService.getPlayerId(playerId));
-        return "result";
+    @PostMapping("/guest")
+    public String handleGuest(HttpSession session) {
+        long number = playerService.countGuests() + 1;
+        String guestName = String.format("Guest[%02d]", number);
+        Player guest = new Player(guestName, 0L, 1);
+        playerService.savePlayer(guest);
+        session.setAttribute("playerId", guest.getId());
+        return "redirect:/home";
     }
+
 
     @PostMapping("/clue")
     public String handleClue(@RequestParam int clueNumber, HttpSession session, Model model){
@@ -159,13 +157,6 @@ public class GameController {
     }
 
 
-    @PostMapping("/guest")
-    public String handleGuest(HttpSession session) {
-        Player guest = new Player("Guest", 0L, 1);
-        playerService.savePlayer(guest);
-        session.setAttribute("playerId", guest.getId());
-        return "redirect:/home";
-    }
 
     @GetMapping("/leaderboard")
     public String showLeaderboard(HttpSession session, Model model) {
@@ -215,5 +206,6 @@ public class GameController {
         }
         return Map.of("saved", true);
     }
+
 }
 

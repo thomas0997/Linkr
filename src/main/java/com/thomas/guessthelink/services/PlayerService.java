@@ -59,7 +59,9 @@ public class PlayerService {
     return playerRepo.findAllByOrderByCurrentLevelDesc();
 
 }
-
+public long countGuests() {
+    return playerRepo.countByUsernameStartingWith("Guest[");
+}
 
 
 }

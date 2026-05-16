@@ -184,16 +184,19 @@
   </div>
 
 </form>
-  <!-- Reject / Regenerate -->
-  <div class="actions" style="margin-top:10px">
-    <form method="POST" th:action="@{/admin/reject}" style="display:inline" id="reject-form">
-      <input type="hidden" name="answer" id="reject-answer-input">
-      <button class="btn danger" type="button" onclick="submitReject()">✗ Reject</button>
-    </form>
-    <form method="POST" th:action="@{/admin/regenerate}" style="display:inline">
-      <button class="btn secondary" type="submit">↺ Regenerate</button>
-    </form>
-  </div>
+
+    <div class="actions" style="margin-top:10px">
+      <form method="POST" th:action="@{/admin/reject}" style="display:inline" id="reject-form">
+        <input type="hidden" name="answer" id="reject-answer-input">
+        <button class="btn danger" type="button" onclick="submitReject()">✗ Reject</button>
+      </form>
+
+      <form method="POST" th:action="@{/admin/regenerate}" style="display:inline">
+        <!-- ← ADD THIS so regenerate knows what answer to reject -->
+        <input type="hidden" name="answer" th:value="${generated != null ? generated.answer : ''}">
+        <button class="btn secondary" type="submit">↺ Regenerate</button>
+      </form>
+    </div>
   </div><!-- /card -->
 
 <script>

@@ -61,20 +61,23 @@ public class AdminController {
         model.addAttribute("message", "✓ Question saved for Level " + levelNumber);
         return "admin";
     }
-
-    // ← MODIFIED: now saves the rejected answer to DB
+    // Reject — saves answer, then immediately regenerates
     @PostMapping("/admin/reject")
     public String rejectQuestion(@RequestParam(required = false) String answer, Model model) {
         if (answer != null && !answer.isBlank()) {
             rejectedAnswerRepo.save(new RejectedAnswer(answer));
-            System.out.println("Rejected answer saved: " + answer);
+            System.out.println("Rejected: " + answer);
         }
-        model.addAttribute("message", "Rejected. Generate a new one.");
-        return "admin";
+        return generateQuestion(model); // ← auto-regenerates instead of going to empty panel
     }
 
+    // Regenerate — also counts as a reject now, then generates
     @PostMapping("/admin/regenerate")
-    public String regenerateQuestion(Model model) {
+    public String regenerateQuestion(@RequestParam(required = false) String answer, Model model) {
+        if (answer != null && !answer.isBlank()) {
+            rejectedAnswerRepo.save(new RejectedAnswer(answer));
+            System.out.println("Regenerate-rejected: " + answer);
+        }
         return generateQuestion(model);
     }
 }

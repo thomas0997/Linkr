@@ -9,4 +9,5 @@ public interface PlayerRepository extends JpaRepository<Player, Long>
 {
     Player findByUsername(String username);
     List<Player> findAllByOrderByCurrentLevelDesc();
+    long countByUsernameStartingWith(String prefix); // ← ADD THIS
 }
