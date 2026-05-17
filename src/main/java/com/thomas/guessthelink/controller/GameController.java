@@ -34,6 +34,9 @@ public class GameController {
     @Autowired 
     GameProgressRepository gameProgressRepo;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
 
 
 
@@ -43,18 +46,27 @@ public class GameController {
         return "login";
     }
 
+    @PostMapping("/login")
+    public String handleLogin(@RequestParam String username,
+                            @RequestParam String password,
+                            HttpSession session) {
 
-    @PostMapping("/login")    
-    public String handleLogin(@RequestParam String username, Model model, HttpSession session){
-        // validate first before anything else
         if (!username.matches("[a-zA-Z0-9_]{3,20}")) {
             return "redirect:/?error=invalid_username";
         }
 
         Player player = playerService.findByUsername(username);
-        if (player == null){
-            player = new Player(username, 0L, 1);
+
+        if (player == null) {
+            String hashed = passwordEncoder.encode(password);
+            player = new Player(username, hashed, 0L, 1);
             playerService.savePlayer(player);
+            session.setAttribute("playerId", player.getId());
+            return "redirect:/home";
+        }
+
+        if (!passwordEncoder.matches(password, player.getPassword())) {
+            return "redirect:/?error=wrong_password";
         }
 
         session.setAttribute("playerId", player.getId());
@@ -123,7 +135,8 @@ public class GameController {
             // No valid cookie — create a fresh numbered guest
             long number = playerService.countGuests() + 1;
             String guestName = String.format("Guest[%02d]", number);
-            Player guest = new Player(guestName, 0L, 1);
+            Player guest = new Player(guestName, "", 0L, 1);
+
             playerService.savePlayer(guest);
 
             // Save their id in a cookie — lasts 30 days
