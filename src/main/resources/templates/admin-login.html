@@ -1,122 +1,60 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<title>Linkr — Admin Login</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
+  <meta charset="UTF-8">
+  <title>Linkr — Admin Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{
-    background:#0d0007;font-family:'Inter',sans-serif;color:#fff;
-    min-height:100vh;display:flex;align-items:center;justify-content:center;
-    }
-
-    .card{
-    background:rgba(18,0,9,0.95);
-    border:0.5px solid rgba(204,34,102,0.25);
-    border-radius:20px;padding:48px 40px;
-    width:100%;max-width:400px;text-align:center;
-    }
-
-    /* logo */
+    body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .card{background:rgba(18,0,9,0.95);border:0.5px solid rgba(204,34,102,0.25);border-radius:20px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
     .logo{font-size:22px;font-weight:800;margin-bottom:28px;letter-spacing:-.5px}
     .logo em{color:#cc2266;font-style:normal}
-
-    /* icon */
-    .lock-icon{
-    width:52px;height:52px;border-radius:50%;
-    background:rgba(204,34,102,0.12);
-    border:0.5px solid rgba(204,34,102,0.3);
-    display:flex;align-items:center;justify-content:center;
-    margin:0 auto 20px;font-size:22px;
-    }
-
+    .lock{width:52px;height:52px;border-radius:50%;background:rgba(204,34,102,0.12);border:0.5px solid rgba(204,34,102,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:22px}
     h2{font-size:20px;font-weight:700;margin-bottom:6px}
-    .sub{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:32px;line-height:1.6}
-
-    /* code input */
-    .code-input{
-    width:100%;
-    background:rgba(204,34,102,0.06);
-    border:0.5px solid rgba(204,34,102,0.3);
-    border-radius:12px;
-    padding:16px;
-    font-size:28px;font-weight:700;
-    color:#fff;text-align:center;
-    letter-spacing:8px;
-    font-family:'Inter',sans-serif;
-    outline:none;
-    margin-bottom:16px;
-    transition:border-color .2s;
-    }
-    .code-input:focus{border-color:#cc2266;box-shadow:0 0 0 3px rgba(204,34,102,0.15)}
-    .code-input::placeholder{letter-spacing:4px;font-size:18px;color:rgba(255,255,255,0.15)}
-
-    /* error */
-    .error{
-    background:rgba(255,50,50,0.1);border:0.5px solid rgba(255,50,50,0.3);
-    border-radius:8px;padding:10px 14px;
-    font-size:13px;color:#ff6666;margin-bottom:16px;
-    }
-
-    /* submit */
-    .btn{
-    width:100%;background:linear-gradient(135deg,#ff2277,#cc0055);
-    border:none;border-radius:12px;padding:14px;
-    font-size:15px;font-weight:700;color:#fff;
-    cursor:pointer;font-family:'Inter',sans-serif;
-    transition:all .2s;margin-bottom:16px;
-    }
+    .sub{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6}
+    .field-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,0.3);text-align:left;display:block;margin-bottom:6px}
+    .field{margin-bottom:16px;text-align:left}
+    input{width:100%;background:rgba(204,34,102,0.06);border:0.5px solid rgba(204,34,102,0.3);border-radius:12px;padding:14px 16px;font-size:15px;color:#fff;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+    input:focus{border-color:#cc2266}
+    .code-input{font-size:24px;font-weight:700;text-align:center;letter-spacing:8px}
+    .code-input::placeholder{letter-spacing:3px;font-size:16px;color:rgba(255,255,255,0.15)}
+    .error{background:rgba(255,50,50,0.1);border:0.5px solid rgba(255,50,50,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#ff6666;margin-bottom:16px}
+    .btn{width:100%;background:linear-gradient(135deg,#ff2277,#cc0055);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px}
     .btn:hover{box-shadow:0 4px 20px rgba(255,34,119,0.4)}
-
-    /* hint */
-    .hint{font-size:12px;color:rgba(255,255,255,0.25);line-height:1.6}
-    .hint strong{color:rgba(255,255,255,0.45)}
-
-    /* setup link */
-    .setup-link{
-    display:block;margin-top:20px;
-    font-size:12px;color:rgba(255,255,255,0.2);
-    text-decoration:none;
-    }
+    .hint{font-size:12px;color:rgba(255,255,255,0.2);margin-top:20px;line-height:1.6}
+    .setup-link{display:block;margin-top:16px;font-size:12px;color:rgba(255,255,255,0.2);text-decoration:none}
     .setup-link:hover{color:rgba(204,34,102,0.6)}
-</style>
+  </style>
 </head>
 <body>
 <div class="card">
+  <div class="logo">Link<em>r</em></div>
+  <div class="lock">🔐</div>
+  <h2>Admin Access</h2>
+  <p class="sub">Enter your password and the current<br>6-digit code from Google Authenticator.</p>
 
-<div class="logo">Link<em>r</em></div>
+  <div class="error" th:if="${error}" th:text="${error}"></div>
 
-<div class="lock-icon">🔐</div>
-<h2>Admin Access</h2>
-<p class="sub">Open Google Authenticator and enter<br>the 6-digit code for <strong>Linkr</strong>.</p>
+  <form method="POST" th:action="@{/admin/login}">
 
-<!-- error message from Spring, only shown on bad code -->
-<div class="error" th:if="${error}" th:text="${error}"></div>
+    <div class="field">
+      <label class="field-label">Password</label>
+      <input type="password" name="password" placeholder="Admin password" required>
+    </div>
 
-<form method="POST" th:action="@{/admin/login}">
-    <input
-    class="code-input"
-    type="text"
-    name="code"
-    maxlength="6"
-    inputmode="numeric"
-    pattern="[0-9]{6}"
-    placeholder="000000"
-    autocomplete="one-time-code"
-    autofocus
-    required>
-    <button class="btn" type="submit">Verify →</button>
-</form>
+    <div class="field">
+      <label class="field-label">Authenticator Code</label>
+      <input class="code-input" type="text" name="code"
+             maxlength="6" inputmode="numeric" pattern="[0-9]{6}"
+             placeholder="000000" autocomplete="one-time-code" required>
+    </div>
 
-<p class="hint">
-    Code changes every <strong>30 seconds</strong>.<br>
-    Make sure your phone clock is accurate.
-</p>
+    <button class="btn" type="submit">Verify & Enter →</button>
+  </form>
 
-<a class="setup-link" href="/admin/setup">First time? Run setup →</a>
-
+  <p class="hint">Code changes every <strong style="color:rgba(255,255,255,0.4)">30 seconds</strong>. Make sure your phone clock is accurate.</p>
+  <a class="setup-link" href="/admin/setup">First time? Scan QR code →</a>
 </div>
 </body>
 </html>
