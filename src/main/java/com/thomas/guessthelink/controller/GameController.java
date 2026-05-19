@@ -26,6 +26,9 @@ public class GameController {
     GameService gameService;
 
     @Autowired
+SessionTracker sessionTracker;
+
+    @Autowired
     PlayerService playerService;
 
     @Autowired
@@ -93,6 +96,7 @@ public class GameController {
     public String showGame(Model model, HttpSession session) {
         Long playerId = (Long) session.getAttribute("playerId");
         if (playerId == null) return "redirect:/";
+        sessionTracker.markActive(playerId);
 
         Player player = playerService.getPlayerId(playerId);
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
@@ -187,6 +191,7 @@ public class GameController {
     public String showHome(HttpSession session, Model model) {
         Long playerId = (Long) session.getAttribute("playerId");
         if (playerId == null) return "redirect:/";
+        sessionTracker.markActive(playerId);
 
         Player player = playerService.getPlayerId(playerId);
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());

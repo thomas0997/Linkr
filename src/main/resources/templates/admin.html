@@ -197,7 +197,11 @@
         <input type="hidden" name="answer" th:value="${generated != null ? generated.answer : ''}">
         <button class="btn secondary" type="submit">↺ Regenerate</button>
       </form>
+          <p>Active players (last 5 min): <strong th:text="${activePlayers}">0</strong></p>
+
     </div>
+
+
   </div><!-- /card -->
 
 <script>

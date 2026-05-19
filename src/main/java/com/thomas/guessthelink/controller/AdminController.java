@@ -12,6 +12,7 @@ import com.thomas.guessthelink.*;
 import com.thomas.guessthelink.services.*;
 import com.thomas.guessthelink.security.TotpService;
 import com.thomas.guessthelink.repository.*;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.Map;
 
@@ -23,6 +24,7 @@ public class AdminController {
     @Autowired QuestionRepository questionRepo;
     @Autowired RejectedAnswerRepository rejectedAnswerRepo;
     @Autowired TotpService totpService;
+    @Autowired SessionTracker sessionTracker;
 
     @Value("${admin.password}")
     private String adminPassword;
@@ -30,73 +32,97 @@ public class AdminController {
     @Value("${admin.totp.secret}")
     private String totpSecret;
 
-    // ── Login page
+    @Value("${admin.access.token}")
+    private String accessToken;
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private boolean isAdmin(HttpSession session) {
+        return Boolean.TRUE.equals(session.getAttribute("adminLoggedIn"));
+    }
+
+    /** Returns 404 — caller must return this string immediately */
+    private String notFound(HttpServletResponse response) {
+        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        return "error";
+    }
+
+    // ── Login page — only exists if ?t=token matches ─────────────────────────
+
     @GetMapping("/admin/login")
-    public String showAdminLogin() {
+    public String showAdminLogin(@RequestParam(required = false) String t,
+                                  HttpServletResponse response) {
+        if (!accessToken.equals(t)) return notFound(response);
         return "admin-login";
     }
 
-    // ── Login submit — requires BOTH password and OTP code
     @PostMapping("/admin/login")
     public String handleAdminLogin(@RequestParam String password,
-                                   @RequestParam String code,
-                                   HttpSession session,
-                                   Model model) {
+                                    @RequestParam String code,
+                                    @RequestParam(required = false) String t,
+                                    HttpSession session,
+                                    Model model,
+                                    HttpServletResponse response) {
+        // Still require the token on POST — prevents blind form submissions
+        if (!accessToken.equals(t)) return notFound(response);
+
         if (!adminPassword.equals(password)) {
             model.addAttribute("error", "Wrong password.");
             return "admin-login";
         }
         if (!totpService.verify(totpSecret, code)) {
-            model.addAttribute("error", "Wrong or expired code. Open Google Authenticator and try again.");
+            model.addAttribute("error", "Wrong or expired code.");
             return "admin-login";
         }
         session.setAttribute("adminLoggedIn", true);
         return "redirect:/admin";
     }
 
-    // ── Setup page — shows QR code to scan into Google Authenticator
+    // ── Setup page ────────────────────────────────────────────────────────────
+
     @GetMapping("/admin/setup")
-    public String showSetup(Model model) {
+    public String showSetup(HttpSession session, Model model, HttpServletResponse response) {
+        if (!isAdmin(session)) return notFound(response);
         String qrUrl = totpService.getQRCodeImageUrl(totpSecret, "admin", "Linkr");
         model.addAttribute("qrUrl", qrUrl);
         model.addAttribute("secret", totpSecret);
         return "admin-setup";
     }
 
-    // ── Admin panel
+    // ── Admin panel ───────────────────────────────────────────────────────────
+
     @GetMapping("/admin")
-    public String showAdmin(HttpSession session, Model model) {
-        if (!Boolean.TRUE.equals(session.getAttribute("adminLoggedIn"))) {
-            return "redirect:/admin/login";
-        }
+    public String showAdmin(HttpSession session, Model model, HttpServletResponse response) {
+        if (!isAdmin(session)) return notFound(response);
+
         int nextLevel = questionRepo.findAll()
-            .stream()
-            .mapToInt(q -> q.getLevelNumber())
-            .max()
-            .orElse(0) + 1;
+            .stream().mapToInt(q -> q.getLevelNumber()).max().orElse(0) + 1;
+
         model.addAttribute("nextLevel", nextLevel);
         model.addAttribute("message", "Welcome. Next suggested level: " + nextLevel);
+        model.addAttribute("activePlayers", sessionTracker.getActiveCount());
         return "admin";
     }
 
-    // ── Logout
+    // ── Logout ────────────────────────────────────────────────────────────────
+
     @GetMapping("/admin/logout")
     public String adminLogout(HttpSession session) {
         session.removeAttribute("adminLoggedIn");
-        return "redirect:/admin/login";
+        return "redirect:/";
     }
 
-    // ── Generate
+    // ── Generate ──────────────────────────────────────────────────────────────
+
     @PostMapping("/admin/generate")
-    public String generateQuestion(Model model) {
-        if (model.getAttribute("nextLevel") == null) {
-            int nextLevel = questionRepo.findAll()
-                .stream()
-                .mapToInt(q -> q.getLevelNumber())
-                .max()
-                .orElse(0) + 1;
-            model.addAttribute("nextLevel", nextLevel);
-        }
+    public String generateQuestion(HttpSession session, Model model, HttpServletResponse response) {
+        if (!isAdmin(session)) return notFound(response);
+
+        int nextLevel = questionRepo.findAll()
+            .stream().mapToInt(q -> q.getLevelNumber()).max().orElse(0) + 1;
+        model.addAttribute("nextLevel", nextLevel);
+        model.addAttribute("activePlayers", sessionTracker.getActiveCount());
+
         try {
             GeneratedQuestion q = geminiService.generateQuestion();
             q.setImageUrl1(unsplashService.getImageUrl(q.getImageKeyword1()));
@@ -110,10 +136,17 @@ public class AdminController {
         return "admin";
     }
 
-    // ── Upload image
+    // ── Upload image ──────────────────────────────────────────────────────────
+
     @PostMapping("/admin/upload-image")
     @ResponseBody
-    public Map<String, Object> uploadImage(@RequestParam MultipartFile file) {
+    public Map<String, Object> uploadImage(@RequestParam MultipartFile file,
+                                            HttpSession session,
+                                            HttpServletResponse response) {
+        if (!isAdmin(session)) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return Map.of("error", "Not found");
+        }
         try {
             String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
             Path uploadDir = Paths.get("src/main/resources/static/uploads");
@@ -125,10 +158,17 @@ public class AdminController {
         }
     }
 
-    // ── Refetch image
+    // ── Refetch image ─────────────────────────────────────────────────────────
+
     @GetMapping("/admin/refetch-image")
     @ResponseBody
-    public Map<String, Object> refetchImage(@RequestParam String keyword) {
+    public Map<String, Object> refetchImage(@RequestParam String keyword,
+                                             HttpSession session,
+                                             HttpServletResponse response) {
+        if (!isAdmin(session)) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return Map.of("error", "Not found");
+        }
         try {
             String url = unsplashService.getImageUrl(keyword);
             if (url == null || url.isBlank()) return Map.of("error", "No image found for: " + keyword);
@@ -138,48 +178,38 @@ public class AdminController {
         }
     }
 
-    // ── Approve
+    // ── Approve ───────────────────────────────────────────────────────────────
+
     @PostMapping("/admin/approve")
-    public String approveQuestion(
+    public String approveQuestion(HttpSession session, Model model, HttpServletResponse response,
         @RequestParam String answer,
         @RequestParam String imageUrl1, @RequestParam String imageUrl2, @RequestParam String imageUrl3,
         @RequestParam String clue1, @RequestParam String clue2, @RequestParam String clue3,
-        @RequestParam int levelNumber, Model model) {
+        @RequestParam int levelNumber) {
+        if (!isAdmin(session)) return notFound(response);
         questionRepo.save(new Question(clue1, clue2, clue3, imageUrl1, imageUrl2, imageUrl3, answer, levelNumber));
         model.addAttribute("message", "✓ Question saved for Level " + levelNumber);
+        model.addAttribute("activePlayers", sessionTracker.getActiveCount());
         return "admin";
     }
 
-    // ── Reject
+    // ── Reject ────────────────────────────────────────────────────────────────
+
     @PostMapping("/admin/reject")
-    public String rejectQuestion(@RequestParam(required = false) String answer, Model model) {
+    public String rejectQuestion(HttpSession session, Model model, HttpServletResponse response,
+                                  @RequestParam(required = false) String answer) {
+        if (!isAdmin(session)) return notFound(response);
         if (answer != null && !answer.isBlank()) rejectedAnswerRepo.save(new RejectedAnswer(answer));
-        return generateQuestion(model);
+        return generateQuestion(session, model, response);
     }
 
-    // ── Regenerate
+    // ── Regenerate ────────────────────────────────────────────────────────────
+
     @PostMapping("/admin/regenerate")
-    public String regenerateQuestion(@RequestParam(required = false) String answer, Model model) {
+    public String regenerateQuestion(HttpSession session, Model model, HttpServletResponse response,
+                                      @RequestParam(required = false) String answer) {
+        if (!isAdmin(session)) return notFound(response);
         if (answer != null && !answer.isBlank()) rejectedAnswerRepo.save(new RejectedAnswer(answer));
-        return generateQuestion(model);
-    }
-    // ── TEMPORARY DEBUG — remove after fixing
-@GetMapping("/admin/totp-test")
-@ResponseBody
-public String totpTest() {
-    long window = java.time.Instant.now().getEpochSecond() / 30;
-    try {
-        byte[] secret = totpService.base32Decode(totpSecret);
-        StringBuilder sb = new StringBuilder();
-        sb.append("Secret in use: ").append(totpSecret).append("\n");
-        sb.append("Current window: ").append(window).append("\n");
-        // call verify with a dummy to trigger the console print
-        totpService.verify(totpSecret, "000000");
-        sb.append("Check your console — it printed the expected codes for windows ")
-          .append(window - 1).append(", ").append(window).append(", ").append(window + 1);
-        return sb.toString();
-    } catch (Exception e) {
-        return "ERROR: " + e.getMessage();
-    }
+        return generateQuestion(session, model, response);
     }
 }
