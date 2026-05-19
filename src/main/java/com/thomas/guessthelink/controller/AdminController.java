@@ -163,4 +163,23 @@ public class AdminController {
         if (answer != null && !answer.isBlank()) rejectedAnswerRepo.save(new RejectedAnswer(answer));
         return generateQuestion(model);
     }
+    // ── TEMPORARY DEBUG — remove after fixing
+@GetMapping("/admin/totp-test")
+@ResponseBody
+public String totpTest() {
+    long window = java.time.Instant.now().getEpochSecond() / 30;
+    try {
+        byte[] secret = totpService.base32Decode(totpSecret);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Secret in use: ").append(totpSecret).append("\n");
+        sb.append("Current window: ").append(window).append("\n");
+        // call verify with a dummy to trigger the console print
+        totpService.verify(totpSecret, "000000");
+        sb.append("Check your console — it printed the expected codes for windows ")
+          .append(window - 1).append(", ").append(window).append(", ").append(window + 1);
+        return sb.toString();
+    } catch (Exception e) {
+        return "ERROR: " + e.getMessage();
+    }
+    }
 }
