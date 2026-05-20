@@ -399,7 +399,7 @@
                 font-size:13px;
                 color:#ff6666;
                 margin-bottom:20px;">
-                <span th:if="${param.error[0] == 'wrong_password'}">Wrong password. Try again.</span>
+                <span th:if="${param.error[0] == 'wrong_password'}">Username Already Taken or Wrong password. Try again. </span>
                 <span th:if="${param.error[0] == 'invalid_username'}">Username must be 3–20 characters, letters and numbers only.</span>
                 </div>
 

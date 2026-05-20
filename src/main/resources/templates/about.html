@@ -22,6 +22,11 @@
     .section p{font-size:15px;color:rgba(255,255,255,0.7);line-height:1.8}
     .placeholder{background:rgba(204,34,102,0.06);border:0.5px dashed rgba(204,34,102,0.3);border-radius:12px;padding:20px;color:rgba(255,255,255,0.2);font-size:13px;font-style:italic;text-align:center}
     .divider{height:0.5px;background:rgba(204,34,102,0.15);margin:32px 0}
+    .back-link {
+            display: inline-block; margin-top: 24px;
+            color: rgba(255,255,255,0.4); font-size: 13px; text-decoration: none;
+        }
+        .back-link:hover { color: #fff; }
   </style>
 </head>
 <body>
@@ -40,7 +45,6 @@
     <div class="logo-name">Link<em>r</em></div>
   </a>
 </div>
-<p>Active players (last 5 min): <strong th:text="${activePlayers}">0</strong></p>
 
 <div class="main">
   <h1>About Link<em>r</em></h1>
@@ -71,6 +75,7 @@
     <h2>Contact</h2>
     <p class="placeholder">[ Email, Twitter/X, GitHub, Discord — however you want people to reach you. ]</p>
   </div>
+  <a class="back-link" href="/home">← Back to home</a>
 </div>
 
 </body>

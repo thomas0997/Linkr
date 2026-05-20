@@ -1,23 +1,3 @@
-
-// Make username case sensitive so admin = admin is the same
-// Starting coins is 10
-// Bug found: Wins: if there is no next level, the user is locked out until ther is. 
-// However, as there is no back button, I pressed the logo to go back/just went back via browser arrow, but the level is locked out even if there is a next level AS A GUEST
-
-// Add a back button in game.html
-// Add a logout button
-// Make an about
-// Make Profile page with stats, progress, etc.
-// If a user tries to IDOR like /afinas, redirect to error page
-// Rechec fo debugging prints
-// Unused codes and redundant code cleanup
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
     <head>
@@ -46,158 +26,67 @@
             .correct-overlay.show .correct-card{transform:scale(1)}
             .correct-card .emoji{font-size:52px;margin-bottom:12px}
             .correct-card h2{
-            font-family:'Syne',sans-serif;
-            font-size:36px;font-weight:800;
-            color:#ff2277;margin-bottom:8px;
+                font-family:'Inter',sans-serif;
+                font-size:36px;font-weight:800;
+                color:#ff2277;margin-bottom:8px;
             }
             .correct-card .coins-earned{
-            font-family:'Syne',sans-serif;
-            font-size:52px;font-weight:800;
-            color:#fff;margin:16px 0;
+                font-family:'Inter',sans-serif;
+                font-size:52px;font-weight:800;
+                color:#fff;margin:16px 0;
             }
             .correct-card p{font-size:14px;color:rgba(255,255,255,0.4)}
 
-            /* confetti pieces */
             .confetti-piece{
-            position:fixed;width:10px;height:10px;
-            border-radius:2px;opacity:0;
-            animation:confetti-fall 1.8s ease-in forwards;
-            z-index:200;pointer-events:none;
+                position:fixed;width:10px;height:10px;
+                border-radius:2px;opacity:0;
+                animation:confetti-fall 1.8s ease-in forwards;
+                z-index:200;pointer-events:none;
             }
             @keyframes confetti-fall{
-            0%{transform:translateY(-20px) rotate(0deg);opacity:1}
-            100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+                0%{transform:translateY(-20px) rotate(0deg);opacity:1}
+                100%{transform:translateY(100vh) rotate(720deg);opacity:0}
             }
-            *{
-                box-sizing:border-box;
-                margin:0;
-                padding:0
-            }
-
-            body{
-                background:#0d0007;
-                font-family:'Inter',sans-serif;
-                color:#fff;height:100vh;
-                overflow:hidden;
-                position:relative
-            }
-
-            .cloud{
-                position:absolute;
-                inset:0;
-                pointer-events:none;
-                z-index:0;
-                overflow:hidden
-            }
+            *{box-sizing:border-box;margin:0;padding:0}
+            body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;height:100vh;overflow:hidden;position:relative}
+            .cloud{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
             .w{position:absolute;font-family:'Inter',sans-serif;font-weight:800;text-transform:uppercase;color:rgba(180,20,80,0.1);white-space:nowrap}
-
-
-
 
             /* ── HEADER ── */
             .header{
-                position:absolute;
-                top:0;
-                left:0;
-                right:0;
-                z-index:10;
-                display:flex;
-                align-items:center;
-                justify-content:space-between;
+                position:absolute;top:0;left:0;right:0;z-index:10;
+                display:flex;align-items:center;justify-content:space-between;
                 padding:14px 40px;
-                background:rgba(10,0,6,0.8);
-                backdrop-filter:blur(16px);
+                background:rgba(10,0,6,0.8);backdrop-filter:blur(16px);
                 border-bottom:0.5px solid rgba(204,34,102,0.15)
             }
-            .logo{
-                display:flex;
-                align-items:center;
-                gap:10px
-            }
-            .logo-box{
-                width:30px;
-                height:30px;
-                border-radius:8px;
-                background:#cc2266;
-                display:flex;
-                align-items:center;
-                justify-content:center
-            }
-            .logo-box svg{
-                width:15px;
-                height:15px
-            }
-            .logo-name{
-                font-family:'Inter',sans-serif;
-                font-size:16px;
-                font-weight:800
-            }
+            .logo{display:flex;align-items:center;gap:10px}
+            .logo-box{width:30px;height:30px;border-radius:8px;background:#cc2266;display:flex;align-items:center;justify-content:center}
+            .logo-box svg{width:15px;height:15px}
+            .logo-name{font-family:'Inter',sans-serif;font-size:16px;font-weight:800}
             .logo-name em{color:#cc2266;font-style:normal}
-            
-            .header-center{
-                font-family:'Inter',sans-serif;
-                font-size:13px;
-                font-weight:700;
-                color:rgba(255,255,255,0.5);
-                letter-spacing:.1em;
-                text-transform:uppercase
-            }
+            .header-center{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.1em;text-transform:uppercase}
             .header-right{display:flex;align-items:center;gap:20px}
-
-            .coin-badge{
-            display:flex;
-            align-items:center;        /* add this */
-            gap:6px;
-            background:rgba(204,34,102,0.12);
-            border:0.5px solid rgba(204,34,102,0.3);
-            border-radius:20px;
-            padding:5px 14px;
-            font-size:13px;
-            font-weight:600;
-            }
-            .nav-link{font-size:13px;color:rgba(255,255,255,0.45);cursor:pointer}
+            .coin-badge{display:flex;align-items:center;gap:6px;background:rgba(204,34,102,0.12);border:0.5px solid rgba(204,34,102,0.3);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
+            .nav-link{font-size:13px;color:rgba(255,255,255,0.45);cursor:pointer;text-decoration:none}
             .nav-link:hover{color:#fff}
             .profile-btn{width:30px;height:30px;border-radius:50%;border:0.5px solid rgba(204,34,102,0.4);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5)}
 
+            /*-- back --*/
+            .back-link {
+            display: inline-block; margin-top: 24px;
+            color: rgba(255,255,255,0.4); font-size: 13px; text-decoration: none;
+        }
+        .back-link:hover { color: #fff; }
             /* ── MAIN ── */
-            .main{
-                position:absolute;
-                inset:0;
-                z-index:5;
-                display:flex;
-                flex-direction:column;
-                align-items:center;
-                justify-content:center;
-                gap:16px;
-                padding:68px 24px 20px
-                
-            }
+            .main{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:68px 24px 20px}
 
             /* ── LEVEL PILL ── */
-            .level-pill{
-                background:#ff2277;
-                border-radius:20px;
-                padding:6px 20px;
-                font-family:'Inter',sans-serif;
-                font-size:13px;
-                font-weight:800;
-                letter-spacing:.05em
-            }
+            .level-pill{background:#ff2277;border-radius:20px;padding:6px 20px;font-family:'Inter',sans-serif;font-size:13px;font-weight:800;letter-spacing:.05em}
 
             /* ── IMAGES ── */
             .imgs{display:flex;gap:12px}
-            .slot{
-                width:130px;
-                height:130px;
-                border-radius:16px;
-                overflow:hidden;
-                background:rgba(204,34,102,0.07);
-                border:0.5px solid rgba(204,34,102,0.2);
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                font-size:44px
-            }
+            .slot{width:130px;height:130px;border-radius:16px;overflow:hidden;background:rgba(204,34,102,0.07);border:0.5px solid rgba(204,34,102,0.2);display:flex;align-items:center;justify-content:center;font-size:44px}
             .slot img{width:100%;height:100%;object-fit:cover}
 
             /* ── CLUE DISPLAY ── */
@@ -219,51 +108,13 @@
             .wrong-msg{text-align:center;font-size:12px;min-height:14px;margin-bottom:8px}
 
             /* ── CLUE BUTTONS ── */
-            .clue-row{
-                display:flex;
-                gap:8px;
-                width:100%;
-                max-width:500px;
-                padding-top:20px;
-
-            }
-            .clue-btn{
-                flex:1;
-                background:rgba(255,255,255,0.04);
-                border:0.5px solid rgba(204,34,102,0.2);
-                border-radius:8px;
-                padding:9px 8px;
-                font-size:12px;
-                color:rgba(255,255,255,0.6);
-                cursor:pointer;
-                font-family:'Inter',sans-serif;
-                transition:all .2s;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                gap:6px;
-            }
-
-            .clue-btn:hover:not(.disabled){
-                background:rgba(204,34,102,0.1);
-                border-color:rgba(204,34,102,0.4)
-            }
-            .clue-btn.disabled{
-                opacity:.4;
-                cursor:not-allowed
-            }
-            .clue-cost{
-                font-size:11px;
-                font-weight:600;
-                padding:2px 7px;
-                border-radius:10px;
-                border-left:0.5px solid rgba(255,255,255,0.1);
-                margin-left:2px
-            }
-            .clue-cost.affordable{color:#fff}             /* enough coins — white */
-            .clue-cost.too-expensive{color:#ff4444}       /* not enough — red */
-
-            
+            .clue-row{display:flex;gap:8px;width:100%;max-width:500px;padding-top:20px}
+            .clue-btn{flex:1;background:rgba(255,255,255,0.04);border:0.5px solid rgba(204,34,102,0.2);border-radius:8px;padding:9px 8px;font-size:12px;color:rgba(255,255,255,0.6);cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+            .clue-btn:hover:not(.disabled){background:rgba(204,34,102,0.1);border-color:rgba(204,34,102,0.4)}
+            .clue-btn.disabled{opacity:.4;cursor:not-allowed}
+            .clue-cost{font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;border-left:0.5px solid rgba(255,255,255,0.1);margin-left:2px}
+            .clue-cost.affordable{color:#fff}
+            .clue-cost.too-expensive{color:#ff4444}
         </style>
     </head>
 <body>
@@ -274,57 +125,39 @@
 <div class="header">
     <div class="logo">
         <div class="logo-box">
-        <svg viewBox="0 0 15 15" fill="none">
-            <circle cx="4" cy="7.5" r="2.5" fill="#fff" opacity=".9"/>
-            <circle cx="11" cy="4" r="2.5" fill="#fff" opacity=".6"/>
-            <circle cx="11" cy="11" r="2.5" fill="#fff" opacity=".6"/>
-            <line x1="6.3" y1="6.1" x2="8.8" y2="4.9" stroke="#fff" stroke-width=".9" opacity=".4"/>
-            <line x1="6.3" y1="8.9" x2="8.8" y2="10.1" stroke="#fff" stroke-width=".9" opacity=".4"/>
-        </svg>
+            <svg viewBox="0 0 15 15" fill="none">
+                <circle cx="4" cy="7.5" r="2.5" fill="#fff" opacity=".9"/>
+                <circle cx="11" cy="4" r="2.5" fill="#fff" opacity=".6"/>
+                <circle cx="11" cy="11" r="2.5" fill="#fff" opacity=".6"/>
+                <line x1="6.3" y1="6.1" x2="8.8" y2="4.9" stroke="#fff" stroke-width=".9" opacity=".4"/>
+                <line x1="6.3" y1="8.9" x2="8.8" y2="10.1" stroke="#fff" stroke-width=".9" opacity=".4"/>
+            </svg>
         </div>
-        <div class="logo-name">
-            <a style="color:#FFF; text-decoration: none;"   href="/home" class="logo-name">Link<em>r</em></a>
+        <a style="color:#FFF; text-decoration:none;" href="/home" class="logo-name">Link<em>r</em></a>
     </div>
 
-    </div>
-
-    <!-- th:text injects level number from Spring -->
     <div class="header-center">Level <span th:text="${player.currentLevel}">1</span> — Find the Link!</div>
 
     <div class="header-right">
-        <!-- th:text injects coin count from Spring -->
         <div class="coin-badge">
-        <span th:text="${player.coins}" id="coin-count">0</span> Coins 🪙
+            <span th:text="${player.coins}" id="coin-count">0</span> Coins 🪙
         </div>
-        
-        
-        <a class="nav-link" href="/about"  style="text-decoration: none;">About</a>
-        <a class="nav-link" href="/tutorial" style="text-decoration: none;" >Tutorial</a>
-
-
-
-        <div class="profile-btn">
-            <a href="/profile" style="text-decoration:none">
-        <div class="profile-btn">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2"/>
-            <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-            </svg>
-        </div>
+        <a class="nav-link" href="/home">← Back</a>
+        <a class="nav-link" href="/about">About</a>
+        <a class="nav-link" href="/tutorial">Tutorial</a>
+        <a href="/profile" style="text-decoration:none">
+            <div class="profile-btn">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2"/>
+                    <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+            </div>
         </a>
-
-
-
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2"/>
-            <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-        </svg>
-        </div>
+        <a class="nav-link" href="/logout">Logout</a>
     </div>
-    </div>
+</div>
 
-    <!-- MAIN -->
-    <!-- MAIN -->
+<!-- MAIN -->
 <div class="main">
     <input type="hidden" id="correct-answer" th:value="${question != null ? question.answer : ''}">
     <input type="hidden" id="player-coins" th:value="${player != null ? player.coins : 0}" value="0">
@@ -333,23 +166,20 @@
     <input type="hidden" id="clue-three" th:value="${question != null ? question.clueThree : ''}">
     <input type="hidden" id="player-level" th:value="${player.currentLevel}" value="1">
 
-
-    <!-- ALREADY COMPLETED — show answer, lock game -->
+    <!-- ALREADY COMPLETED -->
     <div th:if="${alreadyCompleted}" style="text-align:center;padding:40px 20px">
         <div style="font-size:48px;margin-bottom:16px">✓</div>
-        <div style="font-family:'Inter',sans-serif;font-size:22px;color:#cc2266;font-weight:700;margin-bottom:8px">Level is Already Completed!</div>
-        <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:4px; margin-top:50px;">The answer was:</div>
+        <div style="font-family:'Inter',sans-serif;font-size:22px;color:#cc2266;font-weight:700;margin-bottom:8px">Level Already Completed!</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:4px;margin-top:50px;">The answer was:</div>
         <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:800;color:#fff;margin-bottom:24px" th:text="${question.answer}"></div>
-        <a href="/home" style="display:inline-block;background:#cc2266;color:#fff;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px; margin-top:40px;">Back to Home ↗</a>
+        <a href="/home" style="display:inline-block;background:#cc2266;color:#fff;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;margin-top:40px;">Back to Home ↗</a>
     </div>
 
-    <!-- ACTIVE GAME — only show if not completed -->
+    <!-- ACTIVE GAME -->
     <div th:if="${!alreadyCompleted}" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:16px">
 
-        <!-- Level pill -->
         <div class="level-pill">LEVEL <span th:text="${player.currentLevel}">1</span></div>
 
-        <!-- 3 images -->
         <div class="imgs">
             <div class="slot">
                 <img th:if="${question != null}" th:src="${question.imageOne}" alt="Image 1">
@@ -365,26 +195,15 @@
             </div>
         </div>
 
-        <!-- Clue display -->
         <div class="clue-display" id="clue-display">Use a clue to reveal a hint....</div>
 
-
-        <!-- Letter reveal display — shown once first letter clue is used -->
         <div id="letter-display" style="
-        display:none;
-        width:100%;max-width:500px;
-        text-align:center;
-        font-family:'Inter',sans-serif;
-        font-size:22px;font-weight:700;
-        letter-spacing:12px;
-        color:#fff;
-        background:rgba(204,34,102,0.07);
-        border:0.5px solid rgba(204,34,102,0.2);
-        border-radius:10px;
-        padding:14px 20px;
+            display:none;width:100%;max-width:500px;text-align:center;
+            font-family:'Inter',sans-serif;font-size:22px;font-weight:700;letter-spacing:12px;
+            color:#fff;background:rgba(204,34,102,0.07);border:0.5px solid rgba(204,34,102,0.2);
+            border-radius:10px;padding:14px 20px;
         "></div>
 
-        <!-- Guess panel -->
         <div class="panel">
             <div class="panel-label">Your Guess</div>
             <input class="guess-input" type="text" id="guess-field" placeholder="What's the link?" onkeydown="if(event.key==='Enter')submitGuess()">
@@ -395,20 +214,28 @@
                 <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
             </div>
             <div class="tries-label" id="tries-label">1/10 Tries</div>
-           <div class="clue-row">
-            <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
-            <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
-            <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
+            <div class="clue-row">
+                <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
+                <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
+                <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
             </div>
-
-            <!-- Letter clue row — fixed 10 coins, reveals one letter at a time -->
             <div style="display:flex;justify-content:center;margin-top:8px">
-            <div class="clue-btn" id="letter-btn" onclick="useLetterClue()"
-                style="max-width:160px;justify-content:center">
-                Letter <span class="clue-cost" id="cc-letter">| 10 🪙</span>
-            </div>
+                <div class="clue-btn" id="letter-btn" onclick="useLetterClue()" style="max-width:160px;justify-content:center">
+                    Letter <span class="clue-cost" id="cc-letter">| 10 🪙</span>
+                </div>
             </div>
         </div>
+    </div>
+    <a class="back-link" href="/home">← Back</a>
+</div>
+
+<!-- Correct overlay -->
+<div class="correct-overlay" id="correct-overlay">
+    <div class="correct-card">
+        <div class="emoji">🎉</div>
+        <h2>Correct!</h2>
+        <div class="coins-earned" id="coins-earned-display">+5 🪙</div>
+        <p>Next level in 2 seconds...</p>
     </div>
 </div>
 
@@ -426,124 +253,71 @@
     let clueUsed = -1;
     let submitted = false;
 
-    // placeholder from answer length
     if (correctAnswer) {
-    document.getElementById('guess-field').placeholder = 
-        correctAnswer.split(' ').map(w => '*'.repeat(w.length)).join(' ');
+        document.getElementById('guess-field').placeholder =
+            correctAnswer.split(' ').map(w => '*'.repeat(w.length)).join(' ');
     }
 
     function updateCoinColors() {
-    [0,1,2].forEach(i => {
-        const el = document.getElementById('cc' + i);
-        el.className = 'clue-cost ' + (coins >= costs[i] ? 'affordable' : 'too-expensive');
-    });
+        [0,1,2].forEach(i => {
+            const el = document.getElementById('cc' + i);
+            el.className = 'clue-cost ' + (coins >= costs[i] ? 'affordable' : 'too-expensive');
+        });
+        const letterEl = document.getElementById('cc-letter');
+        letterEl.className = 'clue-cost ' + (coins >= 10 ? 'affordable' : 'too-expensive');
     }
 
-    // ── Letter clue ──
+    // ── Letter clue ─────────────────────────────────────────────────────────
     const LETTER_COST = 10;
-    const answerChars = correctAnswer.split(''); // e.g. ['c','a','p','i','t','a','l',' ','c','i','t','i','e','s']
+    const answerChars = correctAnswer.split('');
     let revealedPositions = new Set();
 
-    // Build initial blank pattern: letters → underscore, spaces → space
-    function buildPattern() {
-    return answerChars.map((ch, i) =>
-        ch === ' ' ? ' ' : (revealedPositions.has(i) ? ch.toUpperCase() : '_')
-    ).join('');
-    }
-
     function updateLetterDisplay() {
-    const display = document.getElementById('letter-display');
-    display.style.display = 'block';
-    // Add spaces between chars for readability, but keep real spaces wider
-    display.textContent = answerChars.map((ch, i) => {
-        if (ch === ' ') return '   '; // wider gap for word breaks
-        return revealedPositions.has(i) ? ch.toUpperCase() : '_';
-    }).join(' ');
-    }
-
-    function updateLetterCoinColor() {
-    const el = document.getElementById('cc-letter');
-    el.className = 'clue-cost ' + (coins >= LETTER_COST ? 'affordable' : 'too-expensive');
+        const display = document.getElementById('letter-display');
+        display.style.display = 'block';
+        display.textContent = answerChars.map((ch, i) => {
+            if (ch === ' ') return '   ';
+            return revealedPositions.has(i) ? ch.toUpperCase() : '_';
+        }).join(' ');
     }
 
     function useLetterClue() {
-    if (submitted) return;
+        if (submitted) return;
+        const btn = document.getElementById('letter-btn');
+        if (btn.classList.contains('disabled')) return;
+        if (coins < LETTER_COST) { showMsg('Not enough coins for a letter!', '#ff4444'); return; }
 
-    const btn = document.getElementById('letter-btn');
-    if (btn.classList.contains('disabled')) return;
+        const unrevealed = answerChars
+            .map((ch, i) => ({ ch, i }))
+            .filter(({ ch, i }) => ch !== ' ' && !revealedPositions.has(i));
 
-    if (coins < LETTER_COST) {
-        showMsg('Not enough coins for a letter!', '#ff4444');
-        return;
+        if (unrevealed.length === 0) { showMsg('All letters already revealed!', '#ff4444'); return; }
+
+        fetch('/use-letter-clue', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { showMsg('Not enough coins!', '#ff4444'); return; }
+            coins = data.coins;
+            document.getElementById('coin-count').textContent = coins;
+            updateCoinColors();
+            const pick = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+            revealedPositions.add(pick.i);
+            updateLetterDisplay();
+            if (unrevealed.length - 1 === 0) { btn.classList.add('disabled'); btn.style.pointerEvents = 'none'; }
+        });
     }
 
-    // Find all unrevealed non-space positions
-    const unrevealed = answerChars
-        .map((ch, i) => ({ ch, i }))
-        .filter(({ ch, i }) => ch !== ' ' && !revealedPositions.has(i));
-
-    if (unrevealed.length === 0) {
-        showMsg('All letters already revealed!', '#ff4444');
-        return;
-    }
-
-    // Deduct coins server-side first
-    fetch('/use-letter-clue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (!data.success) {
-        showMsg('Not enough coins!', '#ff4444');
-        return;
-        }
-
-        coins = data.coins;
-        document.getElementById('coin-count').textContent = coins;
-        updateCoinColors();
-        updateLetterCoinColor();
-
-        // Pick a random unrevealed letter and reveal it
-        const pick = unrevealed[Math.floor(Math.random() * unrevealed.length)];
-        revealedPositions.add(pick.i);
-        updateLetterDisplay();
-
-        // Disable button if no more letters to reveal
-        if (unrevealed.length - 1 === 0) {
-        btn.classList.add('disabled');
-        btn.style.pointerEvents = 'none';
-        }
-    });
-    }
-
-    // Hook into updateCoinColors so letter button also updates
-    const _origUpdateCoinColors = updateCoinColors;
-    updateCoinColors = function() {
-    _origUpdateCoinColors();
-    updateLetterCoinColor();
-    };
-
-    const params = new URLSearchParams(window.location.search);
-        if (params.get('noNextLevel') === 'true') {
-            alert('🎉 You finished all available levels! Stay tuned for more coming soon.');
-        }
-
+    // ── Clues ────────────────────────────────────────────────────────────────
     function useClue(i) {
         if (i > clueUsed + 1) return;
         if (document.getElementById('cb' + i).classList.contains('disabled')) return;
         if (coins < costs[i]) { showMsg('Not enough coins!', '#ff4444'); return; }
 
-        // save to DB first
-        fetch('/use-clue?clueNumber=' + (i + 1), {
-            method: 'POST',
-            headers: {'Content-Type':'application/x-www-form-urlencoded'}
-        })
+        fetch('/use-clue?clueNumber=' + (i + 1), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
         .then(r => r.json())
         .then(data => {
             if (!data.success) { showMsg('Not enough coins!', '#ff4444'); return; }
-            
-            coins = data.coins; // use server's coin count
+            coins = data.coins;
             clueUsed = i;
             document.getElementById('coin-count').textContent = coins;
             updateCoinColors();
@@ -555,137 +329,113 @@
         });
     }
 
+    // ── Guess submission ─────────────────────────────────────────────────────
     function submitGuess() {
-    if (submitted) return;
-    const val = document.getElementById('guess-field').value.trim().toLowerCase();
-    if (!val) return;
-    tries++;
-    const dots = document.querySelectorAll('.dot');
-    if (tries <= 10) dots[tries-1].classList.add('used');
-    document.getElementById('tries-label').textContent = tries + '/10 Tries';
+        if (submitted) return;
+        const val = document.getElementById('guess-field').value.trim().toLowerCase();
+        if (!val) return;
+        tries++;
+        const dots = document.querySelectorAll('.dot');
+        if (tries <= 10) dots[tries-1].classList.add('used');
+        document.getElementById('tries-label').textContent = tries + '/10 Tries';
 
-   if (val === correctAnswer) {
-    submitted = true;
-    const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
-    const level = document.getElementById('player-level').value;
-    
-    coins += earned;
-    document.getElementById('coin-count').textContent = coins;
-    updateCoinColors();
-    showCorrectAnimation(earned);
-    document.getElementById('guess-field').disabled = true;
-    document.querySelector('.submit-btn').disabled = true;
+        if (val === correctAnswer) {
+            submitted = true;
+            const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
+            const level = document.getElementById('player-level').value;
 
-    // save progress to DB
-    fetch('/guess-complete?levelNumber=' + level, {
-        method: 'POST',
-        headers: {'Content-Type':'application/x-www-form-urlencoded'}
-    });
+            coins += earned;
+            document.getElementById('coin-count').textContent = coins;
+            updateCoinColors();
+            showCorrectAnimation(earned);
+            document.getElementById('guess-field').disabled = true;
+            document.querySelector('.submit-btn').disabled = true;
 
-    setTimeout(() => {
-        fetch('/next?coinsEarned=' + earned, {
-            method: 'POST',
-            headers: {'Content-Type':'application/x-www-form-urlencoded'}
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.hasNext) {
-                window.location.href = '/game';
-            } else {
-                document.getElementById('correct-overlay').querySelector('p').textContent = 
-                    '🎉 You finished all levels! Stay tuned for more.';
-                setTimeout(() => window.location.href = '/home', 2000);
-            }
-        });
-    }, 2000);
+            // Save progress and unlock next level IMMEDIATELY — before the animation ends.
+            // This ensures the level-up is persisted even if the player navigates away early.
+            Promise.all([
+                fetch('/guess-complete?levelNumber=' + level, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }),
+                fetch('/next?coinsEarned=' + earned, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+                    .then(r => r.json())
+            ]).then(([_, nextData]) => {
+                setTimeout(() => {
+                    if (nextData.hasNext) {
+                        window.location.href = '/game';
+                    } else {
+                        document.getElementById('correct-overlay').querySelector('p').textContent =
+                            '🎉 You finished all levels! Stay tuned for more.';
+                        setTimeout(() => window.location.href = '/home', 2000);
+                    }
+                }, 2000);
+            });
 
-
-    } else if (tries >= 10) {
-
-
-    showMsg('Out of tries! Keep trying — 1 coin per correct answer now.', '#ff4444');
-    document.getElementById('guess-field').value = ''; // add this
-    } else {
-        showMsg('Wrong! Try again.', '#ff4444');
-        document.getElementById('guess-field').value = '';
-    }
+        } else if (tries >= 10) {
+            showMsg('Out of tries! The next guess counts for 1 coin.', '#ff4444');
+            document.getElementById('guess-field').value = '';
+        } else {
+            showMsg('Wrong! Try again.', '#ff4444');
+            document.getElementById('guess-field').value = '';
+        }
     }
 
     function showMsg(text, color) {
-    const el = document.getElementById('wrong-msg');
-    el.style.color = color;
-    el.textContent = text;
+        const el = document.getElementById('wrong-msg');
+        el.style.color = color;
+        el.textContent = text;
     }
 
     function showCorrectAnimation(earned) {
-    document.getElementById('coins-earned-display').textContent = '+' + earned + ' 🪙';
-    document.getElementById('correct-overlay').classList.add('show');
-    launchConfetti();
+        document.getElementById('coins-earned-display').textContent = '+' + earned + ' 🪙';
+        document.getElementById('correct-overlay').classList.add('show');
+        launchConfetti();
     }
 
     function launchConfetti() {
-    const colors = ['#ff2277','#cc0055','#fff','#ff88bb','#ffcc00'];
-    for (let i = 0; i < 60; i++) {
-        setTimeout(() => {
-        const piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        piece.style.left = Math.random() * 100 + 'vw';
-        piece.style.top = '-10px';
-        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.width = (6 + Math.random() * 10) + 'px';
-        piece.style.height = (6 + Math.random() * 10) + 'px';
-        piece.style.animationDuration = (1.2 + Math.random() * 1.2) + 's';
-        piece.style.animationDelay = (Math.random() * 0.5) + 's';
-        document.body.appendChild(piece);
-        setTimeout(() => piece.remove(), 2500);
-        }, i * 20);
-    }
+        const colors = ['#ff2277','#cc0055','#fff','#ff88bb','#ffcc00'];
+        for (let i = 0; i < 60; i++) {
+            setTimeout(() => {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + 'vw';
+                piece.style.top = '-10px';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.width = (6 + Math.random() * 10) + 'px';
+                piece.style.height = (6 + Math.random() * 10) + 'px';
+                piece.style.animationDuration = (1.2 + Math.random() * 1.2) + 's';
+                piece.style.animationDelay = (Math.random() * 0.5) + 's';
+                document.body.appendChild(piece);
+                setTimeout(() => piece.remove(), 2500);
+            }, i * 20);
+        }
     }
 
     updateCoinColors();
 
-    // word cloud
+    // Word cloud background
     const words=['CAPITAL','CITIES','LINK','CONNECT','PUZZLE','CLUE','GUESS','BRAIN','LOGIC','RIDDLE','SOLVE','DECODE','HIDDEN','CLEVER','CURIOUS','VISUAL','WIT','SHARP','PATTERN','THINK'];
     const cl=document.getElementById('cl');
     const items=[];
     words.forEach(w=>{
-    const el=document.createElement('div');
-    el.className='w';
-    el.style.fontSize=(14+Math.random()*38)+'px';
-    el.textContent=w;
-    const x=Math.random()*90,y=Math.random()*90;
-    el.style.left=x+'%';el.style.top=y+'%';
-    el.style.opacity=(0.04+Math.random()*0.07).toString();
-    cl.appendChild(el);
-    items.push({el,x,y,vx:(Math.random()-.5)*0.012,vy:(Math.random()-.5)*0.012});
+        const el=document.createElement('div');
+        el.className='w';
+        el.style.fontSize=(14+Math.random()*38)+'px';
+        el.textContent=w;
+        const x=Math.random()*90, y=Math.random()*90;
+        el.style.left=x+'%'; el.style.top=y+'%';
+        el.style.opacity=(0.04+Math.random()*0.07).toString();
+        cl.appendChild(el);
+        items.push({el,x,y,vx:(Math.random()-.5)*0.012,vy:(Math.random()-.5)*0.012});
     });
     (function tick(){
-    items.forEach(i=>{
-        i.x+=i.vx;i.y+=i.vy;
-        if(i.x<-15)i.x=105;if(i.x>105)i.x=-15;
-        if(i.y<-5)i.y=102;if(i.y>102)i.y=-5;
-        i.el.style.left=i.x+'%';i.el.style.top=i.y+'%';
-    });
-    requestAnimationFrame(tick);
-    })();   
-    
-    history.pushState(null, null, location.href);
-    window.onpopstate = function () {
-    history.pushState(null, null, location.href);
-    };
+        items.forEach(i=>{
+            i.x+=i.vx; i.y+=i.vy;
+            if(i.x<-15)i.x=105; if(i.x>105)i.x=-15;
+            if(i.y<-5)i.y=102; if(i.y>102)i.y=-5;
+            i.el.style.left=i.x+'%'; i.el.style.top=i.y+'%';
+        });
+        requestAnimationFrame(tick);
+    })();
 </script>
-
-        <!-- Add before closing body tag -->
-    <div class="correct-overlay" id="correct-overlay">
-        <div class="correct-card">
-            <div class="emoji">🎉</div>
-            
-            <h2>Correct!</h2>
-            <div class="coins-earned" id="coins-earned-display">+5 🪙</div>
-            <p>Next level in 2 seconds...</p>
-        </div>
-    </div>
-
 
 </body>
 </html>

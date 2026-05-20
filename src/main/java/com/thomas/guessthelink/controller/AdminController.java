@@ -32,46 +32,30 @@ public class AdminController {
     @Value("${admin.totp.secret}")
     private String totpSecret;
 
-    @Value("${admin.access.token}")
-    private String accessToken;
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // ── Helper ────────────────────────────────────────────────────────────────
 
     private boolean isAdmin(HttpSession session) {
         return Boolean.TRUE.equals(session.getAttribute("adminLoggedIn"));
     }
 
-    /** Returns 404 — caller must return this string immediately */
-    private String notFound(HttpServletResponse response) {
-        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        return "error";
-    }
-
-    // ── Login page — only exists if ?t=token matches ─────────────────────────
+    // ── Login page ────────────────────────────────────────────────────────────
 
     @GetMapping("/admin/login")
-    public String showAdminLogin(@RequestParam(required = false) String t,
-                                  HttpServletResponse response) {
-        if (!accessToken.equals(t)) return notFound(response);
+    public String showAdminLogin() {
         return "admin-login";
     }
 
     @PostMapping("/admin/login")
     public String handleAdminLogin(@RequestParam String password,
                                     @RequestParam String code,
-                                    @RequestParam(required = false) String t,
                                     HttpSession session,
-                                    Model model,
-                                    HttpServletResponse response) {
-        // Still require the token on POST — prevents blind form submissions
-        if (!accessToken.equals(t)) return notFound(response);
-
+                                    Model model) {
         if (!adminPassword.equals(password)) {
             model.addAttribute("error", "Wrong password.");
             return "admin-login";
         }
         if (!totpService.verify(totpSecret, code)) {
-            model.addAttribute("error", "Wrong or expired code.");
+            model.addAttribute("error", "Wrong or expired code. Open your authenticator and try again.");
             return "admin-login";
         }
         session.setAttribute("adminLoggedIn", true);
@@ -81,8 +65,8 @@ public class AdminController {
     // ── Setup page ────────────────────────────────────────────────────────────
 
     @GetMapping("/admin/setup")
-    public String showSetup(HttpSession session, Model model, HttpServletResponse response) {
-        if (!isAdmin(session)) return notFound(response);
+    public String showSetup(HttpSession session, Model model) {
+        if (!isAdmin(session)) return "redirect:/admin/login";
         String qrUrl = totpService.getQRCodeImageUrl(totpSecret, "admin", "Linkr");
         model.addAttribute("qrUrl", qrUrl);
         model.addAttribute("secret", totpSecret);
@@ -92,8 +76,8 @@ public class AdminController {
     // ── Admin panel ───────────────────────────────────────────────────────────
 
     @GetMapping("/admin")
-    public String showAdmin(HttpSession session, Model model, HttpServletResponse response) {
-        if (!isAdmin(session)) return notFound(response);
+    public String showAdmin(HttpSession session, Model model) {
+        if (!isAdmin(session)) return "redirect:/admin/login";
 
         int nextLevel = questionRepo.findAll()
             .stream().mapToInt(q -> q.getLevelNumber()).max().orElse(0) + 1;
@@ -109,14 +93,14 @@ public class AdminController {
     @GetMapping("/admin/logout")
     public String adminLogout(HttpSession session) {
         session.removeAttribute("adminLoggedIn");
-        return "redirect:/";
+        return "redirect:/admin/login";
     }
 
     // ── Generate ──────────────────────────────────────────────────────────────
 
     @PostMapping("/admin/generate")
     public String generateQuestion(HttpSession session, Model model, HttpServletResponse response) {
-        if (!isAdmin(session)) return notFound(response);
+        if (!isAdmin(session)) return "redirect:/admin/login";
 
         int nextLevel = questionRepo.findAll()
             .stream().mapToInt(q -> q.getLevelNumber()).max().orElse(0) + 1;
@@ -144,8 +128,8 @@ public class AdminController {
                                             HttpSession session,
                                             HttpServletResponse response) {
         if (!isAdmin(session)) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return Map.of("error", "Not found");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return Map.of("error", "Not authenticated");
         }
         try {
             String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
@@ -166,8 +150,8 @@ public class AdminController {
                                              HttpSession session,
                                              HttpServletResponse response) {
         if (!isAdmin(session)) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return Map.of("error", "Not found");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return Map.of("error", "Not authenticated");
         }
         try {
             String url = unsplashService.getImageUrl(keyword);
@@ -186,7 +170,7 @@ public class AdminController {
         @RequestParam String imageUrl1, @RequestParam String imageUrl2, @RequestParam String imageUrl3,
         @RequestParam String clue1, @RequestParam String clue2, @RequestParam String clue3,
         @RequestParam int levelNumber) {
-        if (!isAdmin(session)) return notFound(response);
+        if (!isAdmin(session)) return "redirect:/admin/login";
         questionRepo.save(new Question(clue1, clue2, clue3, imageUrl1, imageUrl2, imageUrl3, answer, levelNumber));
         model.addAttribute("message", "✓ Question saved for Level " + levelNumber);
         model.addAttribute("activePlayers", sessionTracker.getActiveCount());
@@ -198,7 +182,7 @@ public class AdminController {
     @PostMapping("/admin/reject")
     public String rejectQuestion(HttpSession session, Model model, HttpServletResponse response,
                                   @RequestParam(required = false) String answer) {
-        if (!isAdmin(session)) return notFound(response);
+        if (!isAdmin(session)) return "redirect:/admin/login";
         if (answer != null && !answer.isBlank()) rejectedAnswerRepo.save(new RejectedAnswer(answer));
         return generateQuestion(session, model, response);
     }
@@ -208,7 +192,7 @@ public class AdminController {
     @PostMapping("/admin/regenerate")
     public String regenerateQuestion(HttpSession session, Model model, HttpServletResponse response,
                                       @RequestParam(required = false) String answer) {
-        if (!isAdmin(session)) return notFound(response);
+        if (!isAdmin(session)) return "redirect:/admin/login";
         if (answer != null && !answer.isBlank()) rejectedAnswerRepo.save(new RejectedAnswer(answer));
         return generateQuestion(session, model, response);
     }
