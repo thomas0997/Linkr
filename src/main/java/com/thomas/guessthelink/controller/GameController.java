@@ -94,7 +94,11 @@ public class GameController {
         session.setAttribute("playerId", guest.getId());
         return "redirect:/home";
     }
-
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/";
+    }
     // ── Home ──────────────────────────────────────────────────────────────────
 
     @GetMapping("/home")
@@ -313,11 +317,27 @@ public class GameController {
         return "tutorial";
     }
 
-    @GetMapping("/profile")
+     
+    /*@GetMapping("/profile")
     public String showProfile(HttpSession session, Model model) {
         Long playerId = (Long) session.getAttribute("playerId");
         if (playerId == null) return "redirect:/";
         model.addAttribute("player", playerService.getPlayerId(playerId));
+        return "profile";
+    }*/
+
+    @GetMapping("/profile")
+    public String showProfile(HttpSession session, Model model) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        if (playerId == null) return "redirect:/";
+        
+        Player player = playerService.getPlayerId(playerId);
+        List<Player> leaderboard = playerService.getLeaderboard();
+        
+        model.addAttribute("player", player);
+        model.addAttribute("leaderboard", leaderboard);
+        model.addAttribute("levelsCompleted", player.getCurrentLevel() - 1); 
+        
         return "profile";
     }
 }
