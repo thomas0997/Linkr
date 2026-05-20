@@ -1,6 +1,7 @@
-//logout doesnt work, it just
-
+// Game html when correct answer is given does not progress. SEE FIX I MADE IF APPLICABLE
 // I want the clue to be included in the input. So the user input in the game must be an interactible form for the clue letter to popup. like in 4 pics 1 word.
+
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
     <head>
@@ -333,54 +334,65 @@
     }
 
     // ── Guess submission ─────────────────────────────────────────────────────
-    function submitGuess() {
-        if (submitted) return;
-        const val = document.getElementById('guess-field').value.trim().toLowerCase();
-        if (!val) return;
-        tries++;
-        const dots = document.querySelectorAll('.dot');
-        if (tries <= 10) dots[tries-1].classList.add('used');
-        document.getElementById('tries-label').textContent = tries + '/10 Tries';
+  function submitGuess() {
+    if (submitted) return;
+    const guessField = document.getElementById('guess-field');
+    const val = guessField.value.trim();
+    if (!val) return;
 
-        if (val === correctAnswer) {
+    // Send the guess to the server to be validated securely
+    fetch('/guess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ guess: val })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            window.location.href = '/'; // User not logged in
+            return;
+        }
+
+        if (data.correct) {
+            // Correct Answer! Server handles saving progress and unlocking levels
             submitted = true;
-            const earned = tries===1?5:tries<=3?4:tries<=5?3:tries<=8?2:1;
-            const level = document.getElementById('player-level').value;
-
-            coins += earned;
+            
+            // Update UI with the exact coins the server calculated
+            coins += data.coinsEarned;
             document.getElementById('coin-count').textContent = coins;
             updateCoinColors();
-            showCorrectAnimation(earned);
-            document.getElementById('guess-field').disabled = true;
+            
+            showCorrectAnimation(data.coinsEarned);
+            guessField.disabled = true;
             document.querySelector('.submit-btn').disabled = true;
 
-            // Save progress and unlock next level IMMEDIATELY — before the animation ends.
-            // This ensures the level-up is persisted even if the player navigates away early.
-            Promise.all([
-                fetch('/guess-complete?levelNumber=' + level, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }),
-                fetch('/next?coinsEarned=' + earned, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
-                    .then(r => r.json())
-            ]).then(([_, nextData]) => {
-                setTimeout(() => {
-                    if (nextData.hasNext) {
-                        window.location.href = '/game';
-                    } else {
-                        document.getElementById('correct-overlay').querySelector('p').textContent =
-                            '🎉 You finished all levels! Stay tuned for more.';
-                        setTimeout(() => window.location.href = '/home', 2000);
-                    }
-                }, 2000);
-            });
+            // Redirect based on server's hasNext flag
+            setTimeout(() => {
+                if (data.hasNext) {
+                    window.location.href = '/game';
+                } else {
+                    const overlayText = document.getElementById('correct-overlay').querySelector('p');
+                    if(overlayText) overlayText.textContent = '🎉 You finished all levels! Stay tuned for more.';
+                    setTimeout(() => window.location.href = '/home', 2000);
+                }
+            }, 2000);
 
-        } else if (tries >= 10) {
-            showMsg('Out of tries! The next guess counts for 1 coin.', '#ff4444');
-            document.getElementById('guess-field').value = '';
         } else {
-            showMsg('Wrong! Try again.', '#ff4444');
-            document.getElementById('guess-field').value = '';
-        }
-    }
+            // Wrong Answer! Server tracks the tries and returns the count
+            const dots = document.querySelectorAll('.dot');
+            if (data.tries <= 10) dots[data.tries - 1].classList.add('used');
+            document.getElementById('tries-label').textContent = data.tries + '/10 Tries';
 
+            if (data.tries >= 10) {
+                showMsg('Out of tries! The next guess counts for 1 coin.', '#ff4444');
+            } else {
+                showMsg('Wrong! Try again.', '#ff4444');
+            }
+            guessField.value = '';
+        }
+    })
+    .catch(error => console.error("Error checking guess:", error));
+}
     function showMsg(text, color) {
         const el = document.getElementById('wrong-msg');
         el.style.color = color;
