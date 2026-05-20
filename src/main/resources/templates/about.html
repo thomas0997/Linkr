@@ -13,6 +13,10 @@
     .logo-box{width:30px;height:30px;border-radius:8px;background:#cc2266;display:flex;align-items:center;justify-content:center}
     .logo-name{font-size:16px;font-weight:800}
     .logo-name em{color:#cc2266;font-style:normal}
+    .nav{display:flex;align-items:center;gap:28px}
+    .nav-link{font-size:13px;color:rgba(255,255,255,0.5);text-decoration:none;transition:color .2s}
+    .nav-link:hover{color:#fff}
+    .profile-btn{width:30px;height:30px;border-radius:50%;border:0.5px solid rgba(204,34,102,0.4);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);text-decoration:none}
     .main{max-width:700px;margin:0 auto;padding:100px 24px 60px}
     h1{font-size:36px;font-weight:800;margin-bottom:8px}
     h1 em{color:#cc2266;font-style:normal}
@@ -20,13 +24,11 @@
     .section{margin-bottom:40px}
     .section h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#cc2266;margin-bottom:12px}
     .section p{font-size:15px;color:rgba(255,255,255,0.7);line-height:1.8}
-    .placeholder{background:rgba(204,34,102,0.06);border:0.5px dashed rgba(204,34,102,0.3);border-radius:12px;padding:20px;color:rgba(255,255,255,0.2);font-size:13px;font-style:italic;text-align:center}
+    .section a{color:#cc2266;text-decoration:none}
+    .section a:hover{text-decoration:underline}
     .divider{height:0.5px;background:rgba(204,34,102,0.15);margin:32px 0}
-    .back-link {
-            display: inline-block; margin-top: 24px;
-            color: rgba(255,255,255,0.4); font-size: 13px; text-decoration: none;
-        }
-        .back-link:hover { color: #fff; }
+    .back-link{display:inline-block;margin-top:24px;color:rgba(255,255,255,0.4);font-size:13px;text-decoration:none}
+    .back-link:hover{color:#fff}
   </style>
 </head>
 <body>
@@ -44,6 +46,18 @@
     </div>
     <div class="logo-name">Link<em>r</em></div>
   </a>
+
+  <nav class="nav">
+    <a class="nav-link" href="/home">Home</a>
+    <a class="nav-link" href="/about">About</a>
+    <a class="nav-link" href="/tutorial">Tutorial</a>
+    <a class="profile-btn" href="/profile">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </a>
+  </nav>
 </div>
 
 <div class="main">
@@ -52,29 +66,44 @@
 
   <div class="section">
     <h2>What is Linkr?</h2>
-    <p class="placeholder">[ Write what Linkr is — your elevator pitch. What makes it different from other puzzle games? ]</p>
+    <p>Linkr is a puzzle game where you figure out what connects three images. Given three pictures, your job is to find the hidden link — the word, phrase, or concept that ties them all together. Think of it like 4 Pics 1 Word, but the challenge is lateral thinking and wordplay rather than a single obvious answer. New challenges drop every day, so there's always something fresh to figure out.</p>
   </div>
 
   <div class="divider"></div>
 
   <div class="section">
     <h2>How it started</h2>
-    <p class="placeholder">[ Your origin story — where did the idea come from? MoreSidemen inspiration, etc. ]</p>
+    <p>Linkr was born out of frustration. The creator was a fan of the Sidemen — specifically their MoreSidemen channel on YouTube — where the group plays a "Guess the Link" game. After looking around and finding nothing quite like it online, the decision was simple: build it.</p>
   </div>
 
   <div class="divider"></div>
 
   <div class="section">
     <h2>The team</h2>
-    <p class="placeholder">[ Who built this? Just you? Add your name, links, socials. ]</p>
+    <p>
+      Linkr is a solo side project by Thomas Franco, a Cybersecurity student at Holy Angel University in the Philippines. It started as a way to put Java knowledge into practice and ship something real to the world.
+      <br><br>
+      <a href="https://github.com/thomas0997" target="_blank">GitHub →</a>
+      &nbsp;&nbsp;
+      <a href="https://www.linkedin.com/in/thomas-franco-730209400/" target="_blank">LinkedIn →</a>
+    </p>
   </div>
 
   <div class="divider"></div>
 
   <div class="section">
     <h2>Contact</h2>
-    <p class="placeholder">[ Email, Twitter/X, GitHub, Discord — however you want people to reach you. ]</p>
+    <p>
+      For feedback, bug reports, or anything else — reach out directly.
+      <br><br>
+      <a href="mailto:thomasfranco9907@gmail.com">thomasfranco9907@gmail.com</a>
+      <br>
+      <a href="https://www.linkedin.com/in/thomas-franco-730209400/" target="_blank">LinkedIn →</a>
+      <br><br>
+      © 2025 Thomas Franco. All rights reserved.
+    </p>
   </div>
+
   <a class="back-link" href="/home">← Back to home</a>
 </div>
 

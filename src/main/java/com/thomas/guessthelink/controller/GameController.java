@@ -7,11 +7,12 @@ import com.thomas.guessthelink.services.*;
 import com.thomas.guessthelink.repository.GameProgressRepository;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.Cookie;
 import java.util.*;
+import jakarta.servlet.http.Cookie;
 
 @Controller
 public class GameController {
@@ -20,11 +21,13 @@ public class GameController {
     @Autowired PlayerService playerService;
     @Autowired QuestionService questionService;
     @Autowired GameProgressRepository gameProgressRepo;
+    @Autowired SessionTracker sessionTracker;
 
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    // ── Login page ──────────────────────────────────────────────────────────
+    // ── Login / Register ──────────────────────────────────────────────────────
+
     @GetMapping("/")
     public String showLogin(Model model) {
         return "login";
@@ -34,16 +37,15 @@ public class GameController {
     public String handleLogin(@RequestParam String username,
                               @RequestParam String password,
                               HttpSession session) {
-
         if (!username.matches("[a-zA-Z0-9_]{3,20}")) {
             return "redirect:/?error=invalid_username";
         }
 
-        Player player = playerService.findByUsername(username); // case-insensitive
+        Player player = playerService.findByUsername(username);
 
         if (player == null) {
             String hashed = passwordEncoder.encode(password);
-            player = new Player(username, hashed, 10L, 1); // start with 10 coins
+            player = new Player(username, hashed, 0L, 1);
             playerService.savePlayer(player);
             session.setAttribute("playerId", player.getId());
             return "redirect:/home";
@@ -57,14 +59,8 @@ public class GameController {
         return "redirect:/home";
     }
 
-    // ── Logout ──────────────────────────────────────────────────────────────
-    @GetMapping("/logout")
-    public String logout(HttpSession session) {
-        session.invalidate();
-        return "redirect:/";
-    }
+    // ── Guest ─────────────────────────────────────────────────────────────────
 
-    // ── Guest ───────────────────────────────────────────────────────────────
     @PostMapping("/guest")
     public String handleGuest(HttpSession session,
                               HttpServletRequest request,
@@ -80,14 +76,14 @@ public class GameController {
                             session.setAttribute("playerId", existingId);
                             return "redirect:/home";
                         }
-                    } catch (NumberFormatException e) { /* bad cookie, ignore */ }
+                    } catch (NumberFormatException e) { /* bad cookie */ }
                 }
             }
         }
 
         long number = playerService.countGuests() + 1;
         String guestName = String.format("Guest[%02d]", number);
-        Player guest = new Player(guestName, "", 10L, 1); // start with 10 coins
+        Player guest = new Player(guestName, "", 0L, 1);
         playerService.savePlayer(guest);
 
         Cookie guestCookie = new Cookie("guestId", String.valueOf(guest.getId()));
@@ -99,11 +95,34 @@ public class GameController {
         return "redirect:/home";
     }
 
-    // ── Game ────────────────────────────────────────────────────────────────
+    // ── Home ──────────────────────────────────────────────────────────────────
+
+    @GetMapping("/home")
+    public String showHome(HttpSession session, Model model) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        if (playerId == null) return "redirect:/";
+
+        sessionTracker.markActive(playerId);
+
+        Player player = playerService.getPlayerId(playerId);
+        Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
+        Question nextQuestion = questionService.getQuestionByLevel(player.getCurrentLevel() + 1);
+        boolean hasNextLevel = nextQuestion != null || question != null;
+
+        model.addAttribute("player", player);
+        model.addAttribute("question", question);
+        model.addAttribute("hasNextLevel", hasNextLevel);
+        return "home";
+    }
+
+    // ── Game ──────────────────────────────────────────────────────────────────
+
     @GetMapping("/game")
     public String showGame(Model model, HttpSession session) {
         Long playerId = (Long) session.getAttribute("playerId");
         if (playerId == null) return "redirect:/";
+
+        sessionTracker.markActive(playerId);
 
         Player player = playerService.getPlayerId(playerId);
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
@@ -114,13 +133,77 @@ public class GameController {
             alreadyCompleted = progress != null && progress.getIsComplete();
         }
 
+        // Build word-length pattern (e.g. "******* ******") — no letters revealed
+        // This lets the JS show blank slots per word without exposing the answer
+        String answerPattern = "";
+        if (question != null && question.getAnswer() != null) {
+            answerPattern = question.getAnswer().replaceAll("[^ ]", "*");
+        }
+
         model.addAttribute("player", player);
         model.addAttribute("question", question);
         model.addAttribute("alreadyCompleted", alreadyCompleted);
+        model.addAttribute("answerPattern", answerPattern);
         return "game";
     }
 
-    // ── Clue ────────────────────────────────────────────────────────────────
+    // ── Guess — server checks the answer, calculates coins ────────────────────
+    // Answer never goes to the browser. Tries tracked in session so client
+    // cannot inflate the coin reward by sending a fake tries count.
+
+    @PostMapping("/guess")
+    @ResponseBody
+    public Map<String, Object> handleGuess(@RequestParam String guess, HttpSession session) {
+        Long playerId = (Long) session.getAttribute("playerId");
+        if (playerId == null) return Map.of("error", "not logged in");
+
+        Player player = playerService.getPlayerId(playerId);
+        Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
+        if (question == null) return Map.of("correct", false);
+
+        // Track tries server-side so coins cannot be manipulated by the client
+        String triesKey = "tries_" + question.getId();
+        Integer triesObj = (Integer) session.getAttribute(triesKey);
+        int tries = (triesObj == null ? 0 : triesObj) + 1;
+        session.setAttribute(triesKey, tries);
+
+        boolean correct = question.getAnswer().equalsIgnoreCase(guess.trim());
+
+        if (correct) {
+            int coinsEarned = calculateCoins(tries);
+            playerService.addCoins(playerId, (long) coinsEarned);
+
+            // Save progress (only if not already saved)
+            GameProgress existing = gameProgressRepo.findByPlayerIdAndQuestionId(playerId, question.getId());
+            if (existing == null) {
+                gameProgressRepo.save(new GameProgress(playerId, question.getId(), tries, true));
+            }
+
+            // Unlock next level and check if it exists
+            int nextLevel = player.getCurrentLevel() + 1;
+            boolean hasNext = questionService.getQuestionByLevel(nextLevel) != null;
+            if (hasNext) gameService.unlockNextLevel(playerId);
+
+            // Clear tries for this question from session
+            session.removeAttribute(triesKey);
+
+            return Map.of("correct", true, "coinsEarned", coinsEarned, "hasNext", hasNext);
+        }
+
+        return Map.of("correct", false, "tries", tries);
+    }
+
+    private int calculateCoins(int tries) {
+        if (tries == 1)       return 5;
+        if (tries <= 3)       return 4;
+        if (tries <= 5)       return 3;
+        if (tries <= 8)       return 2;
+        if (tries <= 10)      return 1;
+        return 0;
+    }
+
+    // ── Clue — returns clue TEXT from server, not from hidden HTML input ──────
+
     @PostMapping("/use-clue")
     @ResponseBody
     public Map<String, Object> handleUseClue(@RequestParam int clueNumber, HttpSession session) {
@@ -134,12 +217,24 @@ public class GameController {
 
         playerService.addCoins(playerId, (long) -cost);
         player = playerService.getPlayerId(playerId);
-        return Map.of("success", true, "coins", player.getCoins());
+
+        // Fetch clue text here on the server — never stored in HTML
+        Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
+        String clueText = clueNumber == 1 ? question.getClueOne()
+                        : clueNumber == 2 ? question.getClueTwo()
+                        : question.getClueThree();
+
+        return Map.of("success", true, "coins", player.getCoins(), "clueText", clueText);
     }
+
+    // ── Letter clue — server picks and returns one unrevealed letter ──────────
 
     @PostMapping("/use-letter-clue")
     @ResponseBody
-    public Map<String, Object> handleLetterClue(HttpSession session) {
+    public Map<String, Object> handleLetterClue(
+            @RequestParam(required = false, defaultValue = "") String revealed,
+            HttpSession session) {
+
         Long playerId = (Long) session.getAttribute("playerId");
         Player player = playerService.getPlayerId(playerId);
         int cost = 10;
@@ -148,65 +243,42 @@ public class GameController {
             return Map.of("success", false, "coins", player.getCoins());
         }
 
+        Player refreshed = playerService.getPlayerId(playerId);
+        Question question = questionService.getQuestionByLevel(refreshed.getCurrentLevel());
+        String answer = question.getAnswer();
+
+        // Parse which positions the client already revealed
+        Set<Integer> revealedSet = new HashSet<>();
+        if (!revealed.isBlank()) {
+            for (String s : revealed.split(",")) {
+                try { revealedSet.add(Integer.parseInt(s.trim())); }
+                catch (NumberFormatException ignored) {}
+            }
+        }
+
+        // Collect unrevealed non-space positions
+        List<Integer> candidates = new ArrayList<>();
+        for (int i = 0; i < answer.length(); i++) {
+            if (answer.charAt(i) != ' ' && !revealedSet.contains(i)) {
+                candidates.add(i);
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return Map.of("success", false, "coins", player.getCoins(), "message", "All letters revealed");
+        }
+
         playerService.addCoins(playerId, (long) -cost);
-        player = playerService.getPlayerId(playerId);
-        return Map.of("success", true, "coins", player.getCoins());
+        refreshed = playerService.getPlayerId(playerId);
+
+        int idx = candidates.get(new Random().nextInt(candidates.size()));
+        String letter = String.valueOf(answer.charAt(idx)).toUpperCase();
+
+        return Map.of("success", true, "coins", refreshed.getCoins(), "index", idx, "letter", letter);
     }
 
-    // ── Next level ──────────────────────────────────────────────────────────
-    // Called immediately on correct guess (before animation finishes) so the
-    // level increment is persisted even if the player navigates away early.
-    @PostMapping("/next")
-    @ResponseBody
-    public Map<String, Object> nextLevel(HttpSession session,
-                                         @RequestParam(defaultValue = "0") int coinsEarned) {
-        Long playerId = (Long) session.getAttribute("playerId");
-        Player player = playerService.getPlayerId(playerId);
-        int nextLevel = player.getCurrentLevel() + 1;
-        Question nextQuestion = questionService.getQuestionByLevel(nextLevel);
+    // ── Leaderboard ───────────────────────────────────────────────────────────
 
-        if (coinsEarned > 0) playerService.addCoins(playerId, (long) coinsEarned);
-
-        if (nextQuestion == null) {
-            return Map.of("hasNext", false);
-        }
-
-        gameService.unlockNextLevel(playerId);
-        return Map.of("hasNext", true);
-    }
-
-    // ── Save progress (called on correct guess) ─────────────────────────────
-    @PostMapping("/guess-complete")
-    @ResponseBody
-    public Map<String, Object> guessComplete(@RequestParam int levelNumber, HttpSession session) {
-        Long playerId = (Long) session.getAttribute("playerId");
-        Question question = questionService.getQuestionByLevel(levelNumber);
-
-        if (question != null) {
-            GameProgress progress = new GameProgress(playerId, question.getId(), 0, true);
-            gameProgressRepo.save(progress);
-        }
-        return Map.of("saved", true);
-    }
-
-    // ── Home ────────────────────────────────────────────────────────────────
-    @GetMapping("/home")
-    public String showHome(HttpSession session, Model model) {
-        Long playerId = (Long) session.getAttribute("playerId");
-        if (playerId == null) return "redirect:/";
-
-        Player player = playerService.getPlayerId(playerId);
-        Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
-        Question nextQuestion = questionService.getQuestionByLevel(player.getCurrentLevel() + 1);
-        boolean hasNextLevel = nextQuestion != null || question != null;
-
-        model.addAttribute("player", player);
-        model.addAttribute("question", question);
-        model.addAttribute("hasNextLevel", hasNextLevel);
-        return "home";
-    }
-
-    // ── Leaderboard ─────────────────────────────────────────────────────────
     @GetMapping("/leaderboard")
     public String showLeaderboard(HttpSession session, Model model) {
         Long playerId = (Long) session.getAttribute("playerId");
@@ -223,7 +295,8 @@ public class GameController {
         return "leaderboard";
     }
 
-    // ── Static pages ────────────────────────────────────────────────────────
+    // ── About / Tutorial / Profile ────────────────────────────────────────────
+
     @GetMapping("/about")
     public String showAbout(HttpSession session, Model model) {
         Long playerId = (Long) session.getAttribute("playerId");
@@ -244,18 +317,7 @@ public class GameController {
     public String showProfile(HttpSession session, Model model) {
         Long playerId = (Long) session.getAttribute("playerId");
         if (playerId == null) return "redirect:/";
-
-        Player player = playerService.getPlayerId(playerId);
-        List<GameProgress> allProgress = gameProgressRepo.findAll()
-            .stream()
-            .filter(p -> p.getPlayerId().equals(playerId))
-            .toList();
-
-        long levelsCompleted = allProgress.stream().filter(GameProgress::getIsComplete).count();
-
-        model.addAttribute("player", player);
-        model.addAttribute("levelsCompleted", levelsCompleted);
-        model.addAttribute("leaderboard", playerService.getLeaderboard());
+        model.addAttribute("player", playerService.getPlayerId(playerId));
         return "profile";
     }
 }
