@@ -1,131 +1,75 @@
-// Game html when correct answer is given does not progress. SEE FIX I MADE IF APPLICABLE
-// I want the clue to be included in the input. So the user input in the game must be an interactible form for the clue letter to popup. like in 4 pics 1 word.
-
-
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-    <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=1200">
-    <title>Linkr — Game</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-        <style>
-            .correct-overlay{
-                position:fixed;inset:0;z-index:100;
-                display:flex;align-items:center;justify-content:center;
-                background:rgba(0,0,0,0.75);backdrop-filter:blur(10px);
-                opacity:0;pointer-events:none;
-                transition:opacity .4s ease;
-            }
-            .correct-overlay.show{opacity:1;pointer-events:all}
-            .correct-card{
-                background:rgba(18,0,9,0.95);
-                border:0.5px solid #cc2266;
-                border-radius:24px;padding:48px 64px;
-                text-align:center;
-                transform:scale(0.7);
-                transition:transform .4s cubic-bezier(0.34,1.56,0.64,1);
-            }
-            .correct-overlay.show .correct-card{transform:scale(1)}
-            .correct-card .emoji{font-size:52px;margin-bottom:12px}
-            .correct-card h2{
-                font-family:'Inter',sans-serif;
-                font-size:36px;font-weight:800;
-                color:#ff2277;margin-bottom:8px;
-            }
-            .correct-card .coins-earned{
-                font-family:'Inter',sans-serif;
-                font-size:52px;font-weight:800;
-                color:#fff;margin:16px 0;
-            }
-            .correct-card p{font-size:14px;color:rgba(255,255,255,0.4)}
-
-            .confetti-piece{
-                position:fixed;width:10px;height:10px;
-                border-radius:2px;opacity:0;
-                animation:confetti-fall 1.8s ease-in forwards;
-                z-index:200;pointer-events:none;
-            }
-            @keyframes confetti-fall{
-                0%{transform:translateY(-20px) rotate(0deg);opacity:1}
-                100%{transform:translateY(100vh) rotate(720deg);opacity:0}
-            }
-            *{box-sizing:border-box;margin:0;padding:0}
-            body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;height:100vh;overflow:hidden;position:relative}
-            .cloud{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-            .w{position:absolute;font-family:'Inter',sans-serif;font-weight:800;text-transform:uppercase;color:rgba(180,20,80,0.1);white-space:nowrap}
-
-            /* ── HEADER ── */
-            .header{
-                position:absolute;top:0;left:0;right:0;z-index:10;
-                display:flex;align-items:center;justify-content:space-between;
-                padding:14px 40px;
-                background:rgba(10,0,6,0.8);backdrop-filter:blur(16px);
-                border-bottom:0.5px solid rgba(204,34,102,0.15)
-            }
-            .logo{display:flex;align-items:center;gap:10px}
-            .logo-box{width:30px;height:30px;border-radius:8px;background:#cc2266;display:flex;align-items:center;justify-content:center}
-            .logo-box svg{width:15px;height:15px}
-            .logo-name{font-family:'Inter',sans-serif;font-size:16px;font-weight:800}
-            .logo-name em{color:#cc2266;font-style:normal}
-            .header-center{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.1em;text-transform:uppercase}
-            .header-right{display:flex;align-items:center;gap:20px}
-            .coin-badge{display:flex;align-items:center;gap:6px;background:rgba(204,34,102,0.12);border:0.5px solid rgba(204,34,102,0.3);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
-            .nav-link{font-size:13px;color:rgba(255,255,255,0.45);cursor:pointer;text-decoration:none}
-            .nav-link:hover{color:#fff}
-            .profile-btn{width:30px;height:30px;border-radius:50%;border:0.5px solid rgba(204,34,102,0.4);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5)}
-
-            /*-- back --*/
-            .back-link {
-            display: inline-block; margin-top: 24px;
-            color: rgba(255,255,255,0.4); font-size: 13px; text-decoration: none;
-        }
-        .back-link:hover { color: #fff; }
-            /* ── MAIN ── */
-            .main{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:68px 24px 20px}
-
-            /* ── LEVEL PILL ── */
-            .level-pill{background:#ff2277;border-radius:20px;padding:6px 20px;font-family:'Inter',sans-serif;font-size:13px;font-weight:800;letter-spacing:.05em}
-
-            /* ── IMAGES ── */
-            .imgs{display:flex;gap:12px}
-            .slot{width:130px;height:130px;border-radius:16px;overflow:hidden;background:rgba(204,34,102,0.07);border:0.5px solid rgba(204,34,102,0.2);display:flex;align-items:center;justify-content:center;font-size:44px}
-            .slot img{width:100%;height:100%;object-fit:cover}
-
-            /* ── CLUE DISPLAY ── */
-            .clue-display{width:100%;max-width:500px;background:rgba(204,34,102,0.06);border:0.5px solid rgba(204,34,102,0.2);border-radius:10px;padding:11px 16px;font-size:13px;color:rgba(255,255,255,0.3);font-style:italic}
-            .clue-display.active{color:rgba(255,255,255,0.75);font-style:normal;background:rgba(204,34,102,0.1)}
-
-            /* ── GUESS PANEL ── */
-            .panel{background:rgba(18,0,9,0.88);border:0.5px solid rgba(204,34,102,0.2);border-radius:16px;padding:20px;backdrop-filter:blur(24px);width:100%;max-width:500px}
-            .panel-label{font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
-            .guess-input{width:100%;background:rgba(204,34,102,0.06);border:0.5px solid rgba(204,34,102,0.25);border-radius:8px;padding:11px 14px;font-size:14px;color:#fff;outline:none;font-family:'Inter',sans-serif;margin-bottom:10px}
-            .guess-input::placeholder{color:rgba(255,255,255,0.2)}
-            .guess-input:focus{border-color:#cc2266}
-            .submit-btn{width:100%;background:linear-gradient(135deg,#ff2277,#cc0055);border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
-            .submit-btn:hover{box-shadow:0 4px 20px rgba(255,34,119,0.4)}
-            .tries-row{display:flex;align-items:center;justify-content:center;gap:5px;margin:10px 0 4px}
-            .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.1);transition:background .2s}
-            .dot.used{background:#cc2266;border-color:#cc2266}
-            .tries-label{text-align:center;font-size:11px;color:rgba(255,255,255,0.25);margin-bottom:12px}
-            .wrong-msg{text-align:center;font-size:12px;min-height:14px;margin-bottom:8px}
-
-            /* ── CLUE BUTTONS ── */
-            .clue-row{display:flex;gap:8px;width:100%;max-width:500px;padding-top:20px}
-            .clue-btn{flex:1;background:rgba(255,255,255,0.04);border:0.5px solid rgba(204,34,102,0.2);border-radius:8px;padding:9px 8px;font-size:12px;color:rgba(255,255,255,0.6);cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
-            .clue-btn:hover:not(.disabled){background:rgba(204,34,102,0.1);border-color:rgba(204,34,102,0.4)}
-            .clue-btn.disabled{opacity:.4;cursor:not-allowed}
-            .clue-cost{font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;border-left:0.5px solid rgba(255,255,255,0.1);margin-left:2px}
-            .clue-cost.affordable{color:#fff}
-            .clue-cost.too-expensive{color:#ff4444}
-        </style>
-    </head>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>Linkr — Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    .correct-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .4s ease}
+    .correct-overlay.show{opacity:1;pointer-events:all}
+    .correct-card{background:rgba(18,0,9,0.95);border:0.5px solid #cc2266;border-radius:24px;padding:48px 64px;text-align:center;transform:scale(0.7);transition:transform .4s cubic-bezier(0.34,1.56,0.64,1)}
+    .correct-overlay.show .correct-card{transform:scale(1)}
+    .correct-card .emoji{font-size:52px;margin-bottom:12px}
+    .correct-card h2{font-family:'Inter',sans-serif;font-size:36px;font-weight:800;color:#ff2277;margin-bottom:8px}
+    .correct-card .coins-earned{font-family:'Inter',sans-serif;font-size:52px;font-weight:800;color:#fff;margin:16px 0}
+    .correct-card p{font-size:14px;color:rgba(255,255,255,0.4)}
+    .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;opacity:0;animation:confetti-fall 1.8s ease-in forwards;z-index:200;pointer-events:none}
+    @keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;height:100vh;overflow:hidden;position:relative}
+    .cloud{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+    .w{position:absolute;font-family:'Inter',sans-serif;font-weight:800;text-transform:uppercase;color:rgba(180,20,80,0.1);white-space:nowrap}
+    .header{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;background:rgba(10,0,6,0.8);backdrop-filter:blur(16px);border-bottom:0.5px solid rgba(204,34,102,0.15)}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo-box{width:30px;height:30px;border-radius:8px;background:#cc2266;display:flex;align-items:center;justify-content:center}
+    .logo-box svg{width:15px;height:15px}
+    .logo-name{font-family:'Inter',sans-serif;font-size:16px;font-weight:800}
+    .logo-name em{color:#cc2266;font-style:normal}
+    .header-center{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.1em;text-transform:uppercase}
+    .header-right{display:flex;align-items:center;gap:20px}
+    .coin-badge{display:flex;align-items:center;gap:6px;background:rgba(204,34,102,0.12);border:0.5px solid rgba(204,34,102,0.3);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
+    .nav-link{font-size:13px;color:rgba(255,255,255,0.45);cursor:pointer;text-decoration:none}
+    .nav-link:hover{color:#fff}
+    .profile-btn{width:30px;height:30px;border-radius:50%;border:0.5px solid rgba(204,34,102,0.4);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5)}
+    .back-link{display:inline-block;margin-top:24px;color:rgba(255,255,255,0.4);font-size:13px;text-decoration:none}
+    .back-link:hover{color:#fff}
+    .main{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:68px 24px 20px}
+    .level-pill{background:#ff2277;border-radius:20px;padding:6px 20px;font-family:'Inter',sans-serif;font-size:13px;font-weight:800;letter-spacing:.05em}
+    .imgs{display:flex;gap:12px}
+    .slot{width:120px;height:120px;border-radius:16px;overflow:hidden;background:rgba(204,34,102,0.07);border:0.5px solid rgba(204,34,102,0.2);display:flex;align-items:center;justify-content:center;font-size:44px}
+    .slot img{width:100%;height:100%;object-fit:cover}
+    .clue-display{width:100%;max-width:500px;background:rgba(204,34,102,0.06);border:0.5px solid rgba(204,34,102,0.2);border-radius:10px;padding:10px 16px;font-size:13px;color:rgba(255,255,255,0.3);font-style:italic}
+    .clue-display.active{color:rgba(255,255,255,0.75);font-style:normal;background:rgba(204,34,102,0.1)}
+    .letter-boxes-wrapper{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;width:100%;max-width:500px;padding:14px 0 4px}
+    .word-group{display:flex;gap:5px}
+    .letter-box{width:36px;height:44px;border:1.5px solid rgba(204,34,102,0.35);border-radius:8px;background:rgba(204,34,102,0.06);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;color:#fff;text-transform:uppercase;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s;user-select:none}
+    .letter-box.active{border-color:#ff2277;background:rgba(255,34,119,0.12);box-shadow:0 0 0 2px rgba(255,34,119,0.15)}
+    .letter-box.filled{border-color:rgba(204,34,102,0.6);background:rgba(204,34,102,0.1)}
+    .letter-box.revealed{border-color:#44ff99;background:rgba(68,255,153,0.08);color:#44ff99;cursor:default}
+    #keyboard-capture{position:absolute;left:-9999px;top:0;opacity:0;width:1px;height:1px}
+    .panel{background:rgba(18,0,9,0.88);border:0.5px solid rgba(204,34,102,0.2);border-radius:16px;padding:16px 20px;backdrop-filter:blur(24px);width:100%;max-width:500px}
+    .wrong-msg{text-align:center;font-size:12px;min-height:14px;margin-bottom:8px}
+    .submit-btn{width:100%;background:linear-gradient(135deg,#ff2277,#cc0055);border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+    .submit-btn:hover{box-shadow:0 4px 20px rgba(255,34,119,0.4)}
+    .tries-row{display:flex;align-items:center;justify-content:center;gap:5px;margin:10px 0 4px}
+    .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.1);transition:background .2s}
+    .dot.used{background:#cc2266;border-color:#cc2266}
+    .tries-label{text-align:center;font-size:11px;color:rgba(255,255,255,0.25);margin-bottom:10px}
+    .clue-row{display:flex;gap:8px;width:100%;max-width:500px}
+    .clue-btn{flex:1;background:rgba(255,255,255,0.04);border:0.5px solid rgba(204,34,102,0.2);border-radius:8px;padding:9px 8px;font-size:12px;color:rgba(255,255,255,0.6);cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+    .clue-btn:hover:not(.disabled){background:rgba(204,34,102,0.1);border-color:rgba(204,34,102,0.4)}
+    .clue-btn.disabled{opacity:.4;cursor:not-allowed}
+    .clue-cost{font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;border-left:0.5px solid rgba(255,255,255,0.1);margin-left:2px}
+    .clue-cost.affordable{color:#fff}
+    .clue-cost.too-expensive{color:#ff4444}
+</style>
+</head>
 <body>
-
 <div class="cloud" id="cl"></div>
+<input id="keyboard-capture" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 
-<!-- HEADER -->
 <div class="header">
     <div class="logo">
         <div class="logo-box">
@@ -137,15 +81,11 @@
                 <line x1="6.3" y1="8.9" x2="8.8" y2="10.1" stroke="#fff" stroke-width=".9" opacity=".4"/>
             </svg>
         </div>
-        <a style="color:#FFF; text-decoration:none;" href="/home" class="logo-name">Link<em>r</em></a>
+        <a style="color:#FFF;text-decoration:none;" href="/home" class="logo-name">Link<em>r</em></a>
     </div>
-
     <div class="header-center">Level <span th:text="${player.currentLevel}">1</span> — Find the Link!</div>
-
     <div class="header-right">
-        <div class="coin-badge">
-            <span th:text="${player.coins}" id="coin-count">0</span> Coins 🪙
-        </div>
+        <div class="coin-badge"><span th:text="${player.coins}" id="coin-count">0</span> Coins 🪙</div>
 
         <a class="nav-link" href="/about">About</a>
         <a class="nav-link" href="/tutorial">Tutorial</a>
@@ -157,83 +97,56 @@
                 </svg>
             </div>
         </a>
-
     </div>
 </div>
 
-<!-- MAIN -->
 <div class="main">
-    <input type="hidden" id="correct-answer" th:value="${question != null ? question.answer : ''}">
-    <input type="hidden" id="player-coins" th:value="${player != null ? player.coins : 0}" value="0">
-    <input type="hidden" id="clue-one" th:value="${question != null ? question.clueOne : ''}">
-    <input type="hidden" id="clue-two" th:value="${question != null ? question.clueTwo : ''}">
-    <input type="hidden" id="clue-three" th:value="${question != null ? question.clueThree : ''}">
-    <input type="hidden" id="player-level" th:value="${player.currentLevel}" value="1">
+    <!--
+        SECURITY: Only the word-length PATTERN is sent to the browser ("******* ******").
+        The actual answer never leaves the server.
+        Clue text is fetched on demand. Tries tracked server-side.
+    -->
+    <input type="hidden" id="answer-pattern" th:value="${answerPattern}">
+    <input type="hidden" id="player-coins"   th:value="${player != null ? player.coins : 0}">
 
     <!-- ALREADY COMPLETED -->
     <div th:if="${alreadyCompleted}" style="text-align:center;padding:40px 20px">
         <div style="font-size:48px;margin-bottom:16px">✓</div>
         <div style="font-family:'Inter',sans-serif;font-size:22px;color:#cc2266;font-weight:700;margin-bottom:8px">Level Already Completed!</div>
-        <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:4px;margin-top:50px;">The answer was:</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-top:50px;margin-bottom:4px">The answer was:</div>
         <div style="font-family:'Inter',sans-serif;font-size:28px;font-weight:800;color:#fff;margin-bottom:24px" th:text="${question.answer}"></div>
-        <a href="/home" style="display:inline-block;background:#cc2266;color:#fff;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;margin-top:40px;">Back to Home ↗</a>
+        <a href="/home" style="display:inline-block;background:#cc2266;color:#fff;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;margin-top:40px;">Back to Home</a>
     </div>
 
     <!-- ACTIVE GAME -->
-    <div th:if="${!alreadyCompleted}" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:16px">
-
+    <div th:if="${!alreadyCompleted}" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:14px">
         <div class="level-pill">LEVEL <span th:text="${player.currentLevel}">1</span></div>
-
         <div class="imgs">
-            <div class="slot">
-                <img th:if="${question != null}" th:src="${question.imageOne}" alt="Image 1">
-                <span th:if="${question == null}">❓</span>
-            </div>
-            <div class="slot">
-                <img th:if="${question != null}" th:src="${question.imageTwo}" alt="Image 2">
-                <span th:if="${question == null}">❓</span>
-            </div>
-            <div class="slot">
-                <img th:if="${question != null}" th:src="${question.imageThree}" alt="Image 3">
-                <span th:if="${question == null}">❓</span>
-            </div>
+            <div class="slot"><img th:if="${question != null}" th:src="${question.imageOne}" alt="Image 1"><span th:if="${question == null}">❓</span></div>
+            <div class="slot"><img th:if="${question != null}" th:src="${question.imageTwo}" alt="Image 2"><span th:if="${question == null}">❓</span></div>
+            <div class="slot"><img th:if="${question != null}" th:src="${question.imageThree}" alt="Image 3"><span th:if="${question == null}">❓</span></div>
         </div>
-
         <div class="clue-display" id="clue-display">Use a clue to reveal a hint....</div>
-
-        <div id="letter-display" style="
-            display:none;width:100%;max-width:500px;text-align:center;
-            font-family:'Inter',sans-serif;font-size:22px;font-weight:700;letter-spacing:12px;
-            color:#fff;background:rgba(204,34,102,0.07);border:0.5px solid rgba(204,34,102,0.2);
-            border-radius:10px;padding:14px 20px;
-        "></div>
-
+        <div class="letter-boxes-wrapper" id="letter-boxes" onclick="focusCapture()"></div>
         <div class="panel">
-            <div class="panel-label">Your Guess</div>
-            <input class="guess-input" type="text" id="guess-field" placeholder="What's the link?" onkeydown="if(event.key==='Enter')submitGuess()">
             <div class="wrong-msg" id="wrong-msg"></div>
-            <button class="submit-btn" onclick="submitGuess()">Submit ↗</button>
+            <button class="submit-btn" onclick="submitGuess()">Submit</button>
             <div class="tries-row" id="tries-row">
                 <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
                 <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
             </div>
-            <div class="tries-label" id="tries-label">1/10 Tries</div>
-            <div class="clue-row">
-                <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
-                <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
-                <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
-            </div>
-            <div style="display:flex;justify-content:center;margin-top:8px">
-                <div class="clue-btn" id="letter-btn" onclick="useLetterClue()" style="max-width:160px;justify-content:center">
-                    Letter <span class="clue-cost" id="cc-letter">| 10 🪙</span>
-                </div>
-            </div>
+            <div class="tries-label" id="tries-label">0/10 Tries</div>
+        </div>
+        <div class="clue-row">
+            <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
+            <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
+            <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
+            <div class="clue-btn" id="letter-btn" onclick="useLetterClue()">Letter <span class="clue-cost" id="cc-letter">| 10 🪙</span></div>
         </div>
     </div>
-    <a class="back-link" href="/home">← Back</a>
+    <a class="back-link" href="/home">Back to Home</a>
 </div>
 
-<!-- Correct overlay -->
 <div class="correct-overlay" id="correct-overlay">
     <div class="correct-card">
         <div class="emoji">🎉</div>
@@ -244,213 +157,212 @@
 </div>
 
 <script>
-    const clues = [
-        document.getElementById('clue-one').value,
-        document.getElementById('clue-two').value,
-        document.getElementById('clue-three').value
-    ];
-    const costs = [2, 4, 8];
+const answerPattern = document.getElementById('answer-pattern').value;
+let coins = parseInt(document.getElementById('player-coins').value) || 0;
+const costs = [2, 4, 8];
+let submitted = false;
 
-    const correctAnswer = document.getElementById('correct-answer').value.toLowerCase().trim();
-    let coins = parseInt(document.getElementById('player-coins').value) || 0;
-    let tries = 0;
-    let clueUsed = -1;
-    let submitted = false;
-
-    if (correctAnswer) {
-        document.getElementById('guess-field').placeholder =
-            correctAnswer.split(' ').map(w => '*'.repeat(w.length)).join(' ');
+// Build index mappings
+const answerIndexToBoxIndex = {};
+const boxIndexToAnswerIndex = [];
+for (let i = 0; i < answerPattern.length; i++) {
+    if (answerPattern[i] !== ' ') {
+        answerIndexToBoxIndex[i] = boxIndexToAnswerIndex.length;
+        boxIndexToAnswerIndex.push(i);
     }
+}
+const totalBoxes = boxIndexToAnswerIndex.length;
+const boxValues  = new Array(totalBoxes).fill('');
+const revealed   = new Set();
+let   currentBox = 0;
 
-    function updateCoinColors() {
-        [0,1,2].forEach(i => {
-            const el = document.getElementById('cc' + i);
-            el.className = 'clue-cost ' + (coins >= costs[i] ? 'affordable' : 'too-expensive');
-        });
-        const letterEl = document.getElementById('cc-letter');
-        letterEl.className = 'clue-cost ' + (coins >= 10 ? 'affordable' : 'too-expensive');
-    }
-
-    // ── Letter clue ─────────────────────────────────────────────────────────
-    const LETTER_COST = 10;
-    const answerChars = correctAnswer.split('');
-    let revealedPositions = new Set();
-
-    function updateLetterDisplay() {
-        const display = document.getElementById('letter-display');
-        display.style.display = 'block';
-        display.textContent = answerChars.map((ch, i) => {
-            if (ch === ' ') return '   ';
-            return revealedPositions.has(i) ? ch.toUpperCase() : '_';
-        }).join(' ');
-    }
-
-    function useLetterClue() {
-        if (submitted) return;
-        const btn = document.getElementById('letter-btn');
-        if (btn.classList.contains('disabled')) return;
-        if (coins < LETTER_COST) { showMsg('Not enough coins for a letter!', '#ff4444'); return; }
-
-        const unrevealed = answerChars
-            .map((ch, i) => ({ ch, i }))
-            .filter(({ ch, i }) => ch !== ' ' && !revealedPositions.has(i));
-
-        if (unrevealed.length === 0) { showMsg('All letters already revealed!', '#ff4444'); return; }
-
-        fetch('/use-letter-clue', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
-        .then(r => r.json())
-        .then(data => {
-            if (!data.success) { showMsg('Not enough coins!', '#ff4444'); return; }
-            coins = data.coins;
-            document.getElementById('coin-count').textContent = coins;
-            updateCoinColors();
-            const pick = unrevealed[Math.floor(Math.random() * unrevealed.length)];
-            revealedPositions.add(pick.i);
-            updateLetterDisplay();
-            if (unrevealed.length - 1 === 0) { btn.classList.add('disabled'); btn.style.pointerEvents = 'none'; }
-        });
-    }
-
-    // ── Clues ────────────────────────────────────────────────────────────────
-    function useClue(i) {
-        if (i > clueUsed + 1) return;
-        if (document.getElementById('cb' + i).classList.contains('disabled')) return;
-        if (coins < costs[i]) { showMsg('Not enough coins!', '#ff4444'); return; }
-
-        fetch('/use-clue?clueNumber=' + (i + 1), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
-        .then(r => r.json())
-        .then(data => {
-            if (!data.success) { showMsg('Not enough coins!', '#ff4444'); return; }
-            coins = data.coins;
-            clueUsed = i;
-            document.getElementById('coin-count').textContent = coins;
-            updateCoinColors();
-            const display = document.getElementById('clue-display');
-            display.textContent = clues[i];
-            display.classList.add('active');
-            document.getElementById('cb' + i).classList.add('disabled');
-            document.getElementById('cb' + i).style.pointerEvents = 'none';
-        });
-    }
-
-    // ── Guess submission ─────────────────────────────────────────────────────
-  function submitGuess() {
-    if (submitted) return;
-    const guessField = document.getElementById('guess-field');
-    const val = guessField.value.trim();
-    if (!val) return;
-
-    // Send the guess to the server to be validated securely
-    fetch('/guess', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ guess: val })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            window.location.href = '/'; // User not logged in
-            return;
+function buildBoxes() {
+    const container = document.getElementById('letter-boxes');
+    container.innerHTML = '';
+    const words = answerPattern.split(' ');
+    let boxIdx = 0;
+    words.forEach((word, wi) => {
+        const group = document.createElement('div');
+        group.className = 'word-group';
+        for (let i = 0; i < word.length; i++) {
+            const box = document.createElement('div');
+            box.className = 'letter-box';
+            box.id = 'box-' + boxIdx;
+            const b = boxIdx;
+            box.addEventListener('click', (e) => { e.stopPropagation(); currentBox = b; updateBoxDisplay(); focusCapture(); });
+            group.appendChild(box);
+            boxIdx++;
         }
+        container.appendChild(group);
+    });
+    updateBoxDisplay();
+}
 
+function updateBoxDisplay() {
+    for (let i = 0; i < totalBoxes; i++) {
+        const box = document.getElementById('box-' + i);
+        if (!box) continue;
+        box.className = 'letter-box';
+        if (revealed.has(i))      box.classList.add('revealed');
+        else if (boxValues[i])    box.classList.add('filled');
+        if (i === currentBox && !submitted) box.classList.add('active');
+        box.textContent = boxValues[i] || '';
+    }
+}
+
+function focusCapture() { document.getElementById('keyboard-capture').focus(); }
+
+document.addEventListener('keydown', function(e) {
+    if (submitted) return;
+    if (e.key === 'Enter') { submitGuess(); return; }
+    if (e.key === 'Backspace') {
+        e.preventDefault();
+        if (boxValues[currentBox] && !revealed.has(currentBox)) {
+            boxValues[currentBox] = '';
+            updateBoxDisplay();
+        } else {
+            let prev = currentBox - 1;
+            while (prev >= 0 && revealed.has(prev)) prev--;
+            if (prev >= 0) { currentBox = prev; if (!revealed.has(currentBox)) boxValues[currentBox] = ''; updateBoxDisplay(); }
+        }
+        return;
+    }
+    if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+        if (currentBox >= totalBoxes) return;
+        if (!revealed.has(currentBox)) boxValues[currentBox] = e.key.toUpperCase();
+        let next = currentBox + 1;
+        while (next < totalBoxes && revealed.has(next)) next++;
+        currentBox = Math.min(next, totalBoxes - 1);
+        updateBoxDisplay();
+    }
+});
+
+function assembleGuess() {
+    let result = '', boxIdx = 0;
+    for (let i = 0; i < answerPattern.length; i++) {
+        if (answerPattern[i] === ' ') result += ' ';
+        else { result += boxValues[boxIdx] || ''; boxIdx++; }
+    }
+    return result.trim();
+}
+
+function updateCoinColors() {
+    [0,1,2].forEach(i => { document.getElementById('cc' + i).className = 'clue-cost ' + (coins >= costs[i] ? 'affordable' : 'too-expensive'); });
+    document.getElementById('cc-letter').className = 'clue-cost ' + (coins >= 10 ? 'affordable' : 'too-expensive');
+}
+
+async function useClue(i) {
+    if (document.getElementById('cb' + i).classList.contains('disabled')) return;
+    if (coins < costs[i]) { showMsg('Not enough coins!', '#ff4444'); return; }
+    try {
+        const res = await fetch('/use-clue?clueNumber=' + (i + 1), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+        const data = await res.json();
+        if (!data.success) { showMsg('Not enough coins!', '#ff4444'); return; }
+        coins = data.coins;
+        document.getElementById('coin-count').textContent = coins;
+        updateCoinColors();
+        const display = document.getElementById('clue-display');
+        display.textContent = data.clueText;
+        display.classList.add('active');
+        document.getElementById('cb' + i).classList.add('disabled');
+        document.getElementById('cb' + i).style.pointerEvents = 'none';
+    } catch (e) { showMsg('Network error', '#ff4444'); }
+}
+
+async function useLetterClue() {
+    if (submitted) return;
+    const btn = document.getElementById('letter-btn');
+    if (btn.classList.contains('disabled')) return;
+    if (coins < 10) { showMsg('Not enough coins for a letter!', '#ff4444'); return; }
+    const revealedStr = Array.from(revealed).map(b => boxIndexToAnswerIndex[b]).join(',');
+    try {
+        const res = await fetch('/use-letter-clue', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'revealed=' + encodeURIComponent(revealedStr) });
+        const data = await res.json();
+        if (!data.success) { showMsg(data.message || 'Not enough coins!', '#ff4444'); return; }
+        coins = data.coins;
+        document.getElementById('coin-count').textContent = coins;
+        updateCoinColors();
+        const boxIdx = answerIndexToBoxIndex[data.index];
+        boxValues[boxIdx] = data.letter.toUpperCase();
+        revealed.add(boxIdx);
+        let next = 0;
+        while (next < totalBoxes && (revealed.has(next) || boxValues[next])) next++;
+        currentBox = Math.min(next, totalBoxes - 1);
+        updateBoxDisplay();
+        if (revealed.size >= totalBoxes) { btn.classList.add('disabled'); btn.style.pointerEvents = 'none'; }
+    } catch (e) { showMsg('Network error', '#ff4444'); }
+}
+
+async function submitGuess() {
+    if (submitted) return;
+    const guess = assembleGuess();
+    const filled = guess.replace(/\s/g,'').length;
+    if (filled < totalBoxes) { showMsg('Fill in all the letters first!', '#ff4444'); return; }
+    try {
+        const res = await fetch('/guess', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'guess=' + encodeURIComponent(guess) });
+        const data = await res.json();
+        if (data.error) { window.location.href = '/'; return; }
         if (data.correct) {
-            // Correct Answer! Server handles saving progress and unlocking levels
             submitted = true;
-            
-            // Update UI with the exact coins the server calculated
             coins += data.coinsEarned;
             document.getElementById('coin-count').textContent = coins;
             updateCoinColors();
-            
-            showCorrectAnimation(data.coinsEarned);
-            guessField.disabled = true;
+            document.getElementById('coins-earned-display').textContent = '+' + data.coinsEarned + ' 🪙';
+            document.getElementById('correct-overlay').classList.add('show');
+            launchConfetti();
             document.querySelector('.submit-btn').disabled = true;
-
-            // Redirect based on server's hasNext flag
             setTimeout(() => {
-                if (data.hasNext) {
-                    window.location.href = '/game';
-                } else {
-                    const overlayText = document.getElementById('correct-overlay').querySelector('p');
-                    if(overlayText) overlayText.textContent = '🎉 You finished all levels! Stay tuned for more.';
-                    setTimeout(() => window.location.href = '/home', 2000);
-                }
+                if (data.hasNext) { window.location.href = '/game'; }
+                else { document.getElementById('correct-overlay').querySelector('p').textContent = 'You finished all levels! Stay tuned for more.'; setTimeout(() => window.location.href = '/home', 2000); }
             }, 2000);
-
         } else {
-            // Wrong Answer! Server tracks the tries and returns the count
+            const tries = data.tries;
             const dots = document.querySelectorAll('.dot');
-            if (data.tries <= 10) dots[data.tries - 1].classList.add('used');
-            document.getElementById('tries-label').textContent = data.tries + '/10 Tries';
-
-            if (data.tries >= 10) {
-                showMsg('Out of tries! The next guess counts for 1 coin.', '#ff4444');
-            } else {
-                showMsg('Wrong! Try again.', '#ff4444');
-            }
-            guessField.value = '';
+            if (tries <= 10) dots[tries - 1].classList.add('used');
+            document.getElementById('tries-label').textContent = tries + '/10 Tries';
+            showMsg(tries >= 10 ? 'Out of tries!' : 'Wrong! Try again.', '#ff4444');
+            document.getElementById('letter-boxes').animate([{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],{duration:200,iterations:2});
+            for (let i = 0; i < totalBoxes; i++) { if (!revealed.has(i)) boxValues[i] = ''; }
+            currentBox = 0;
+            while (currentBox < totalBoxes && revealed.has(currentBox)) currentBox++;
+            updateBoxDisplay();
         }
-    })
-    .catch(error => console.error("Error checking guess:", error));
+    } catch (e) { showMsg('Network error', '#ff4444'); }
 }
-    function showMsg(text, color) {
-        const el = document.getElementById('wrong-msg');
-        el.style.color = color;
-        el.textContent = text;
+
+function showMsg(text, color) { const el = document.getElementById('wrong-msg'); el.style.color = color; el.textContent = text; }
+
+function launchConfetti() {
+    const colors = ['#ff2277','#cc0055','#fff','#ff88bb','#ffcc00'];
+    for (let i = 0; i < 60; i++) {
+        setTimeout(() => {
+            const p = document.createElement('div'); p.className = 'confetti-piece';
+            p.style.left = Math.random()*100+'vw'; p.style.top = '-10px';
+            p.style.background = colors[Math.floor(Math.random()*colors.length)];
+            p.style.width = (6+Math.random()*10)+'px'; p.style.height = (6+Math.random()*10)+'px';
+            p.style.animationDuration = (1.2+Math.random()*1.2)+'s'; p.style.animationDelay = (Math.random()*0.5)+'s';
+            document.body.appendChild(p); setTimeout(()=>p.remove(),2500);
+        }, i*20);
     }
+}
 
-    function showCorrectAnimation(earned) {
-        document.getElementById('coins-earned-display').textContent = '+' + earned + ' 🪙';
-        document.getElementById('correct-overlay').classList.add('show');
-        launchConfetti();
-    }
+buildBoxes(); updateCoinColors(); focusCapture();
 
-    function launchConfetti() {
-        const colors = ['#ff2277','#cc0055','#fff','#ff88bb','#ffcc00'];
-        for (let i = 0; i < 60; i++) {
-            setTimeout(() => {
-                const piece = document.createElement('div');
-                piece.className = 'confetti-piece';
-                piece.style.left = Math.random() * 100 + 'vw';
-                piece.style.top = '-10px';
-                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-                piece.style.width = (6 + Math.random() * 10) + 'px';
-                piece.style.height = (6 + Math.random() * 10) + 'px';
-                piece.style.animationDuration = (1.2 + Math.random() * 1.2) + 's';
-                piece.style.animationDelay = (Math.random() * 0.5) + 's';
-                document.body.appendChild(piece);
-                setTimeout(() => piece.remove(), 2500);
-            }, i * 20);
-        }
-    }
-
-    updateCoinColors();
-
-    // Word cloud background
-    const words=['CAPITAL','CITIES','LINK','CONNECT','PUZZLE','CLUE','GUESS','BRAIN','LOGIC','RIDDLE','SOLVE','DECODE','HIDDEN','CLEVER','CURIOUS','VISUAL','WIT','SHARP','PATTERN','THINK'];
-    const cl=document.getElementById('cl');
-    const items=[];
-    words.forEach(w=>{
-        const el=document.createElement('div');
-        el.className='w';
-        el.style.fontSize=(14+Math.random()*38)+'px';
-        el.textContent=w;
-        const x=Math.random()*90, y=Math.random()*90;
-        el.style.left=x+'%'; el.style.top=y+'%';
-        el.style.opacity=(0.04+Math.random()*0.07).toString();
-        cl.appendChild(el);
-        items.push({el,x,y,vx:(Math.random()-.5)*0.012,vy:(Math.random()-.5)*0.012});
-    });
-    (function tick(){
-        items.forEach(i=>{
-            i.x+=i.vx; i.y+=i.vy;
-            if(i.x<-15)i.x=105; if(i.x>105)i.x=-15;
-            if(i.y<-5)i.y=102; if(i.y>102)i.y=-5;
-            i.el.style.left=i.x+'%'; i.el.style.top=i.y+'%';
-        });
-        requestAnimationFrame(tick);
-    })();
+const words=['CAPITAL','CITIES','LINK','CONNECT','PUZZLE','CLUE','GUESS','BRAIN','LOGIC','RIDDLE','SOLVE','DECODE','HIDDEN','CLEVER','CURIOUS','VISUAL','WIT','SHARP','PATTERN','THINK'];
+const cl=document.getElementById('cl');
+const items=[];
+words.forEach(w=>{
+    const el=document.createElement('div'); el.className='w';
+    el.style.fontSize=(14+Math.random()*38)+'px'; el.textContent=w;
+    const x=Math.random()*90,y=Math.random()*90;
+    el.style.left=x+'%'; el.style.top=y+'%';
+    el.style.opacity=(0.04+Math.random()*0.07).toString();
+    cl.appendChild(el); items.push({el,x,y,vx:(Math.random()-.5)*0.012,vy:(Math.random()-.5)*0.012});
+});
+(function tick(){
+    items.forEach(i=>{i.x+=i.vx;i.y+=i.vy;if(i.x<-15)i.x=105;if(i.x>105)i.x=-15;if(i.y<-5)i.y=102;if(i.y>102)i.y=-5;i.el.style.left=i.x+'%';i.el.style.top=i.y+'%';});
+    requestAnimationFrame(tick);
+})();
 </script>
-
 </body>
 </html>
