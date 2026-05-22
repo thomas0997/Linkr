@@ -177,29 +177,40 @@
   <input type="hidden" name="imageUrl3" id="approve-url3" th:value="${generated.imageUrl3}">
 
   <div class="actions" style="margin-top:16px">
-    <div>
-      <label style="font-size:12px;color:rgba(255,255,255,0.4)">Level:</label>
-      <input class="level-input" type="number" name="levelNumber" min="1" value="1">
+      <div>
+        <label style="font-size:12px;color:rgba(255,255,255,0.4)">Level:</label>
+        <input class="level-input" type="number" name="levelNumber" min="1" value="1">
+      </div>
+      <div>
+        <label style="font-size:12px;color:rgba(255,255,255,0.4)">Theme (optional):</label>
+        <input class="keyword-input" type="text" name="theme"
+               placeholder="e.g. sports, countries, food" style="width:180px">
+      </div>
+      <button class="btn" type="submit">✓ Approve</button>
     </div>
-    <button class="btn" type="submit">✓ Approve</button>
+
+  </form>
+
+  <div class="actions" style="margin-top:10px">
+
+    <form method="POST" th:action="@{/admin/reject}" style="display:inline" id="reject-form">
+      <input type="hidden" name="answer" id="reject-answer-input">
+      <input type="hidden" name="reason" id="reject-reason-input">
+      <input type="hidden" name="theme"  id="reject-theme-input">
+      <button class="btn danger" type="button" onclick="submitRejectWithReason()">✗ Reject</button>
+    </form>
+
+    <form method="POST" th:action="@{/admin/regenerate}" style="display:inline" id="regen-form">
+      <input type="hidden" name="answer" id="regen-answer-input"
+             th:value="${generated != null ? generated.answer : ''}">
+      <input type="hidden" name="reason" id="regen-reason-input">
+      <input type="hidden" name="theme"  id="regen-theme-input">
+      <button class="btn secondary" type="button" onclick="submitRegenWithReason()">↺ Regenerate</button>
+    </form>
+
+    <p>Active players (last 5 min): <strong th:text="${activePlayers}">0</strong></p>
+
   </div>
-
-</form>
-
-    <div class="actions" style="margin-top:10px">
-      <form method="POST" th:action="@{/admin/reject}" style="display:inline" id="reject-form">
-        <input type="hidden" name="answer" id="reject-answer-input">
-        <button class="btn danger" type="button" onclick="submitReject()">✗ Reject</button>
-      </form>
-
-      <form method="POST" th:action="@{/admin/regenerate}" style="display:inline">
-        <!-- ← ADD THIS so regenerate knows what answer to reject -->
-        <input type="hidden" name="answer" th:value="${generated != null ? generated.answer : ''}">
-        <button class="btn secondary" type="submit">↺ Regenerate</button>
-      </form>
-          <p>Active players (last 5 min): <strong th:text="${activePlayers}">0</strong></p>
-
-    </div>
 
 
   </div><!-- /card -->
@@ -245,11 +256,27 @@
   }
 
     // Copies the current (possibly edited) answer into the reject form before submitting
-  function submitReject() {
+function submitRejectWithReason() {
     const answer = document.getElementById('editable-answer').value;
+    const reason = prompt('Why reject? (helps train the AI)\ne.g. "wordplay too obscure", "images don\'t match", "too similar to previous question"') || '';
+    const theme  = prompt('What theme is this? (optional)\ne.g. "sports", "countries", "food", "movies"') || '';
+
     document.getElementById('reject-answer-input').value = answer;
+    document.getElementById('reject-reason-input').value = reason;
+    document.getElementById('reject-theme-input').value  = theme;
     document.getElementById('reject-form').submit();
-  }
+}
+
+function submitRegenWithReason() {
+    const answer = document.getElementById('editable-answer').value;
+    const reason = prompt('Why regenerate? (optional)\ne.g. "images too ambiguous", "answer too obvious"') || '';
+    const theme  = prompt('Theme to avoid? (optional)\ne.g. "sports", "countries"') || '';
+
+    document.getElementById('regen-answer-input').value = answer;
+    document.getElementById('regen-reason-input').value = reason;
+    document.getElementById('regen-theme-input').value  = theme;
+    document.getElementById('regen-form').submit();
+}
 </script>
 
 </body>

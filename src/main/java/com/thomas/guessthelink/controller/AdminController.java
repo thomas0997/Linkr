@@ -174,36 +174,46 @@ public class AdminController {
 
     // ── Approve ───────────────────────────────────────────────────────────────
 
+   // ── Approve — now also tracks the answer as "used"
     @PostMapping("/admin/approve")
-    public String approveQuestion(HttpSession session, Model model, HttpServletResponse response,
+    public String approveQuestion(
         @RequestParam String answer,
         @RequestParam String imageUrl1, @RequestParam String imageUrl2, @RequestParam String imageUrl3,
         @RequestParam String clue1, @RequestParam String clue2, @RequestParam String clue3,
-        @RequestParam int levelNumber) {
-        if (!isAdmin(session)) return "redirect:/admin/login";
+        @RequestParam int levelNumber,
+        @RequestParam(required = false, defaultValue = "") String theme,  // NEW
+        Model model) {
+
         questionRepo.save(new Question(clue1, clue2, clue3, imageUrl1, imageUrl2, imageUrl3, answer, levelNumber));
+
+        // Track as used so Groq never suggests it again
+        if (!rejectedAnswerRepo.existsByAnswerIgnoreCase(answer)) {
+            rejectedAnswerRepo.save(new RejectedAnswer(answer, theme, true));
+        }
+
         model.addAttribute("message", "✓ Question saved for Level " + levelNumber);
-        model.addAttribute("activePlayers", sessionTracker.getActiveCount());
         return "admin";
     }
 
-    // ── Reject ────────────────────────────────────────────────────────────────
-
-    @PostMapping("/admin/reject")
+// ── Reject — now captures reason and theme@PostMapping("/admin/reject")
     public String rejectQuestion(HttpSession session, Model model, HttpServletResponse response,
-                                  @RequestParam(required = false) String answer) {
+                                @RequestParam(required = false) String answer,
+                                @RequestParam(required = false, defaultValue = "") String reason,
+                                @RequestParam(required = false, defaultValue = "") String theme) {
         if (!isAdmin(session)) return "redirect:/admin/login";
-        if (answer != null && !answer.isBlank()) rejectedAnswerRepo.save(new RejectedAnswer(answer));
-        return generateQuestion(session, model, response);
+        if (answer != null && !answer.isBlank())
+            rejectedAnswerRepo.save(new RejectedAnswer(answer, reason, theme));
+        return generateQuestion(session, model, response);  // ← all 3 args
     }
-
-    // ── Regenerate ────────────────────────────────────────────────────────────
 
     @PostMapping("/admin/regenerate")
     public String regenerateQuestion(HttpSession session, Model model, HttpServletResponse response,
-                                      @RequestParam(required = false) String answer) {
+                                    @RequestParam(required = false) String answer,
+                                    @RequestParam(required = false, defaultValue = "") String reason,
+                                    @RequestParam(required = false, defaultValue = "") String theme) {
         if (!isAdmin(session)) return "redirect:/admin/login";
-        if (answer != null && !answer.isBlank()) rejectedAnswerRepo.save(new RejectedAnswer(answer));
-        return generateQuestion(session, model, response);
+        if (answer != null && !answer.isBlank())
+            rejectedAnswerRepo.save(new RejectedAnswer(answer, reason, theme));
+        return generateQuestion(session, model, response);  // ← all 3 args
     }
 }

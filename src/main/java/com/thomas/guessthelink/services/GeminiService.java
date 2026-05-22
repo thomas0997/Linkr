@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.thomas.guessthelink.GeneratedQuestion;
+import com.thomas.guessthelink.RejectedAnswer;
 import com.thomas.guessthelink.repository.RejectedAnswerRepository;
 
 import java.net.URI;
@@ -27,27 +28,50 @@ public class GeminiService {
     private final HttpClient client = HttpClient.newHttpClient();
 
     public GeneratedQuestion generateQuestion() throws Exception {
-        // ← NEW: build rejected list from DB
-        List<String> rejected = rejectedAnswerRepo.findAll()
-            .stream()
+        List<RejectedAnswer> allTracked = rejectedAnswerRepo.findAll();
+
+        // Separate used from rejected
+        List<String> usedAnswers = allTracked.stream()
+            .filter(r -> r.isUsed())
             .map(r -> r.getAnswer())
             .collect(Collectors.toList());
 
-        String rejectedLine = rejected.isEmpty() ? "" :
-            "- Do NOT use any of these already-rejected answers: " + String.join(", ", rejected) + "\n";
+        List<RejectedAnswer> rejectedOnes = allTracked.stream()
+            .filter(r -> !r.isUsed())
+            .collect(Collectors.toList());
 
-        // ← NEW: retry loop — tries up to 5 times to get a non-rejected answer
+        // Build a RICH context block instead of a flat list
+        StringBuilder avoidBlock = new StringBuilder();
+
+        if (!usedAnswers.isEmpty()) {
+            avoidBlock.append("ALREADY USED IN THE GAME (do not repeat these answers or very similar concepts):\n");
+            for (String used : usedAnswers) {
+                avoidBlock.append("  - ").append(used).append("\n");
+            }
+            avoidBlock.append("\n");
+        }
+
+        if (!rejectedOnes.isEmpty()) {
+            avoidBlock.append("REJECTED QUESTIONS (avoid these answers AND the reasoning behind why they failed):\n");
+            for (RejectedAnswer r : rejectedOnes) {
+                avoidBlock.append("  - Answer: ").append(r.getAnswer());
+                if (r.getTheme() != null && !r.getTheme().isBlank())
+                    avoidBlock.append(" | Theme: ").append(r.getTheme());
+                if (r.getReason() != null && !r.getReason().isBlank())
+                    avoidBlock.append(" | Problem: ").append(r.getReason());
+                avoidBlock.append("\n");
+            }
+            avoidBlock.append("\n");
+        }
+
         for (int attempt = 0; attempt < 5; attempt++) {
-            GeneratedQuestion q = callGroq(rejectedLine);
+            GeneratedQuestion q = callGroq(avoidBlock.toString());
             if (!rejectedAnswerRepo.existsByAnswerIgnoreCase(q.getAnswer())) {
                 return q;
             }
-            System.out.println("Attempt " + (attempt + 1) + ": skipping rejected answer: " + q.getAnswer());
         }
-
         throw new RuntimeException("Could not generate a non-rejected question after 5 attempts.");
     }
-
     // ← Extracted into its own method so the retry loop can call it cleanly
     private GeneratedQuestion callGroq(String rejectedLine) throws Exception {
         String prompt =
@@ -65,6 +89,7 @@ public class GeminiService {
             "Example: Jake Paul, Elton John, George Michael = Members of the beatles (John Lennon, Paul McCartney, George Harrison)\n" +
             "Example: Franklin Roosevelt, Michael Jackson, Trevor Noah = GTA Characters (Franklin, Michael, Trevor)\n" +
             "Example: Mouse Trap, House, Flag of the USA = Genres of Music (Trap, House, Country)\n" +
+            "Example: Forest, Castle, Ham = Premier League Teams (Nottingham Forest, Newcastle United, West Ham Uniteds)\n" +
             "Rules:\n" +
             "- The answer must be a common English phrase, category, or concept.\n" +
             "- Its a riddle-like challenge. Don't Make it Obvious and make it tricky.\n" +

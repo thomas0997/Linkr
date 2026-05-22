@@ -7,4 +7,6 @@ import java.util.List;
 public interface RejectedAnswerRepository extends JpaRepository<RejectedAnswer, Long> {
     boolean existsByAnswerIgnoreCase(String answer);
     List<RejectedAnswer> findAll();
+    List<RejectedAnswer> findByIsUsedFalse();  // only rejected (bad) ones
+    List<RejectedAnswer> findByIsUsedTrue();   // only used (approved) ones
 }
