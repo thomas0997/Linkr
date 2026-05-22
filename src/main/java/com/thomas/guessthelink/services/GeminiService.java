@@ -62,6 +62,9 @@ public class GeminiService {
             "Example: A Whale swimming, The Giga Chad Meme, and picture of germs = Countries (Wales, Chad, Germany)\n" +
             "Example: Grass, A computer program, and a corn = Types of Snakes (Grass Snake, Python, Corn Snake)\n" +
             "Example: A bat, Frank Sinatra (The Singer), and Raheem Sterling (The Footballer) = Currencies (Baht, Franc, Sterling)\n" +
+            "Example: Jake Paul, Elton John, George Michael = Members of the beatles (John Lennon, Paul McCartney, George Harrison)\n" +
+            "Example: Franklin Roosevelt, Michael Jackson, Trevor Noah = GTA Characters (Franklin, Michael, Trevor)\n" +
+            "Example: Mouse Trap, House, Flag of the USA = Genres of Music (Trap, House, Country)\n" +
             "Rules:\n" +
             "- The answer must be a common English phrase, category, or concept.\n" +
             "- Its a riddle-like challenge. Don't Make it Obvious and make it tricky.\n" +

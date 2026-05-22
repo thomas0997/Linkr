@@ -20,10 +20,12 @@ public class PlayerService {
         return playerRepo.save(player);
     }
 
+    // Coins floored at 0 — deducting more than the player has is a no-op on the negative side
     public Player addCoins(Long id, Long coins) {
         Player player = playerRepo.findById(id).orElse(null);
         if (player == null) return null;
-        player.setCoins(player.getCoins() + coins);
+        long newTotal = player.getCoins() + coins;
+        player.setCoins(Math.max(0, newTotal));
         return playerRepo.save(player);
     }
 

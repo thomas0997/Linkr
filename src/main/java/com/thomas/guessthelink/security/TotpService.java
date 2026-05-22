@@ -25,7 +25,9 @@ public class TotpService {
             byte[] secret = base32Decode(base32Secret);
             long window = Instant.now().getEpochSecond() / PERIOD;
 
-            for (long w = window - 1; w <= window + 1; w++) {
+            // ±2 windows = 2.5 minutes tolerance on each side
+            // Handles minor clock drift between phone and server
+            for (long w = window - 2; w <= window + 2; w++) {
                 String expected = String.format("%06d", generateCode(secret, w));
                 if (expected.equals(userCode)) return true;
             }

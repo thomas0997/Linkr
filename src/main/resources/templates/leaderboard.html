@@ -12,6 +12,19 @@
     .cloud{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
     .w{position:absolute;font-family:'Inter',sans-serif;font-weight:800;text-transform:uppercase;color:rgba(180,20,80,0.08);white-space:nowrap}
 
+    .back-link {
+    display: block;          /* Changed from inline-block */
+    width: fit-content;       /* Keeps the box tight around the text */
+    margin: 24px auto 0 auto; /* 24px on top, auto on left/right to center it */
+    
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 13px;
+    text-decoration: none;
+}
+.back-link:hover {
+    color: #fff;
+}
+
     /* ── HEADER ── */
     .header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;background:rgba(10,0,6,0.8);backdrop-filter:blur(16px);border-bottom:0.5px solid rgba(204,34,102,0.15)}
     .logo{display:flex;align-items:center;gap:10px;cursor:pointer;text-decoration:none;color:#fff}
@@ -177,6 +190,7 @@
       <div class="level-val" th:text="${p.currentLevel}">1</div>
     </div>
   </div>
+  <a class="back-link" href="/home">← Back to home</a>
 </div>
 
 <script>

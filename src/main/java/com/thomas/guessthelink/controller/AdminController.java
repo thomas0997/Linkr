@@ -121,6 +121,8 @@ public class AdminController {
     }
 
     // ── Upload image ──────────────────────────────────────────────────────────
+    // SECURITY: Original filename is discarded entirely to prevent path traversal.
+    // Extension is detected from content type; defaults to .jpg if unknown.
 
     @PostMapping("/admin/upload-image")
     @ResponseBody
@@ -132,11 +134,19 @@ public class AdminController {
             return Map.of("error", "Not authenticated");
         }
         try {
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            // Derive a safe extension from content type only — original filename ignored
+            String contentType = file.getContentType() != null ? file.getContentType() : "";
+            String ext = contentType.contains("png") ? ".png"
+                       : contentType.contains("gif") ? ".gif"
+                       : contentType.contains("webp") ? ".webp"
+                       : ".jpg";
+
+            String safeFilename = UUID.randomUUID().toString() + ext;
+
             Path uploadDir = Paths.get("src/main/resources/static/uploads");
             Files.createDirectories(uploadDir);
-            Files.write(uploadDir.resolve(filename), file.getBytes());
-            return Map.of("url", "/uploads/" + filename);
+            Files.write(uploadDir.resolve(safeFilename), file.getBytes());
+            return Map.of("url", "/uploads/" + safeFilename);
         } catch (Exception e) {
             return Map.of("error", "Upload failed: " + e.getMessage());
         }

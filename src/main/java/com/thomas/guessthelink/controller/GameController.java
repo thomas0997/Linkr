@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import com.thomas.guessthelink.*;
 import com.thomas.guessthelink.services.*;
+import com.thomas.guessthelink.security.RateLimitService;
 import com.thomas.guessthelink.repository.GameProgressRepository;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ public class GameController {
     @Autowired QuestionService questionService;
     @Autowired GameProgressRepository gameProgressRepo;
     @Autowired SessionTracker sessionTracker;
+    @Autowired RateLimitService rateLimitService;
 
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
@@ -33,30 +35,52 @@ public class GameController {
         return "login";
     }
 
-    @PostMapping("/login")
+   @PostMapping("/login")
     public String handleLogin(@RequestParam String username,
-                              @RequestParam String password,
-                              HttpSession session) {
+                            @RequestParam String password,
+                            HttpSession session,
+                            HttpServletRequest request) {  // ← add this parameter
+
         if (!username.matches("[a-zA-Z0-9_]{3,20}")) {
             return "redirect:/?error=invalid_username";
         }
 
+        // ── Rate limit ────────────────────────────────────────────────
+        String ip = request.getRemoteAddr();
+        if (rateLimitService.isBlocked(ip)) {
+            long mins = rateLimitService.minutesRemaining(ip);
+            return "redirect:/?error=too_many_attempts&mins=" + mins;
+        }
+        // ─────────────────────────────────────────────────────────────
+
         Player player = playerService.findByUsername(username);
 
         if (player == null) {
+            // New account — no failure to record
             String hashed = passwordEncoder.encode(password);
             player = new Player(username, hashed, 0L, 1);
             playerService.savePlayer(player);
+            rateLimitService.recordSuccess(ip);
             session.setAttribute("playerId", player.getId());
             return "redirect:/home";
         }
 
         if (!passwordEncoder.matches(password, player.getPassword())) {
+            rateLimitService.recordFailure(ip);  // ← record bad attempt
             return "redirect:/?error=wrong_password";
         }
 
+        rateLimitService.recordSuccess(ip);  // ← clear on success
         session.setAttribute("playerId", player.getId());
         return "redirect:/home";
+    }
+
+    // ── Logout ────────────────────────────────────────────────────────────────
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/";
     }
 
     // ── Guest ─────────────────────────────────────────────────────────────────
@@ -94,11 +118,7 @@ public class GameController {
         session.setAttribute("playerId", guest.getId());
         return "redirect:/home";
     }
-    @GetMapping("/logout")
-    public String logout(HttpSession session) {
-        session.invalidate();
-        return "redirect:/";
-    }
+
     // ── Home ──────────────────────────────────────────────────────────────────
 
     @GetMapping("/home")
@@ -137,8 +157,6 @@ public class GameController {
             alreadyCompleted = progress != null && progress.getIsComplete();
         }
 
-        // Build word-length pattern (e.g. "******* ******") — no letters revealed
-        // This lets the JS show blank slots per word without exposing the answer
         String answerPattern = "";
         if (question != null && question.getAnswer() != null) {
             answerPattern = question.getAnswer().replaceAll("[^ ]", "*");
@@ -151,21 +169,29 @@ public class GameController {
         return "game";
     }
 
-    // ── Guess — server checks the answer, calculates coins ────────────────────
-    // Answer never goes to the browser. Tries tracked in session so client
-    // cannot inflate the coin reward by sending a fake tries count.
+    // ── Guess — server checks answer, server tracks tries, server calculates coins
+    // Rate limited per IP to prevent brute-force answer scanning.
 
     @PostMapping("/guess")
     @ResponseBody
-    public Map<String, Object> handleGuess(@RequestParam String guess, HttpSession session) {
+    public Map<String, Object> handleGuess(@RequestParam String guess,
+                                            HttpSession session,
+                                            HttpServletRequest request) {
+        // Rate limit: same limits as admin login — 5 failures = 30 min lockout
+        String ip = request.getRemoteAddr();
+        if (rateLimitService.isBlocked(ip)) {
+            long mins = rateLimitService.minutesRemaining(ip);
+            return Map.of("error", "Too many wrong guesses. Try again in " + mins + " minute(s).");
+        }
+
         Long playerId = (Long) session.getAttribute("playerId");
         if (playerId == null) return Map.of("error", "not logged in");
 
         Player player = playerService.getPlayerId(playerId);
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
-        if (question == null) return Map.of("correct", false);
+        if (question == null) return Map.of("correct", false, "tries", 0);
 
-        // Track tries server-side so coins cannot be manipulated by the client
+        // Tries tracked in session — client cannot send a fake tries count
         String triesKey = "tries_" + question.getId();
         Integer triesObj = (Integer) session.getAttribute(triesKey);
         int tries = (triesObj == null ? 0 : triesObj) + 1;
@@ -174,25 +200,27 @@ public class GameController {
         boolean correct = question.getAnswer().equalsIgnoreCase(guess.trim());
 
         if (correct) {
+            rateLimitService.recordSuccess(ip); // clear lockout on correct answer
+
             int coinsEarned = calculateCoins(tries);
             playerService.addCoins(playerId, (long) coinsEarned);
 
-            // Save progress (only if not already saved)
             GameProgress existing = gameProgressRepo.findByPlayerIdAndQuestionId(playerId, question.getId());
             if (existing == null) {
                 gameProgressRepo.save(new GameProgress(playerId, question.getId(), tries, true));
             }
 
-            // Unlock next level and check if it exists
             int nextLevel = player.getCurrentLevel() + 1;
             boolean hasNext = questionService.getQuestionByLevel(nextLevel) != null;
             if (hasNext) gameService.unlockNextLevel(playerId);
 
-            // Clear tries for this question from session
             session.removeAttribute(triesKey);
 
             return Map.of("correct", true, "coinsEarned", coinsEarned, "hasNext", hasNext);
         }
+
+        // Record failure for rate limiting
+        rateLimitService.recordFailure(ip);
 
         return Map.of("correct", false, "tries", tries);
     }
@@ -206,13 +234,18 @@ public class GameController {
         return 0;
     }
 
-    // ── Clue — returns clue TEXT from server, not from hidden HTML input ──────
+    // ── Clue — server returns clue text, coins deducted server-side ───────────
 
     @PostMapping("/use-clue")
     @ResponseBody
     public Map<String, Object> handleUseClue(@RequestParam int clueNumber, HttpSession session) {
         Long playerId = (Long) session.getAttribute("playerId");
+        // Null check: session may have expired mid-game
+        if (playerId == null) return Map.of("success", false, "coins", 0);
+
         Player player = playerService.getPlayerId(playerId);
+        if (player == null) return Map.of("success", false, "coins", 0);
+
         int cost = clueNumber == 1 ? 2 : clueNumber == 2 ? 4 : 8;
 
         if (player.getCoins() < cost) {
@@ -222,8 +255,9 @@ public class GameController {
         playerService.addCoins(playerId, (long) -cost);
         player = playerService.getPlayerId(playerId);
 
-        // Fetch clue text here on the server — never stored in HTML
         Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
+        if (question == null) return Map.of("success", false, "coins", player.getCoins());
+
         String clueText = clueNumber == 1 ? question.getClueOne()
                         : clueNumber == 2 ? question.getClueTwo()
                         : question.getClueThree();
@@ -231,7 +265,7 @@ public class GameController {
         return Map.of("success", true, "coins", player.getCoins(), "clueText", clueText);
     }
 
-    // ── Letter clue — server picks and returns one unrevealed letter ──────────
+    // ── Letter clue — server picks an unrevealed letter and returns it ─────────
 
     @PostMapping("/use-letter-clue")
     @ResponseBody
@@ -240,18 +274,23 @@ public class GameController {
             HttpSession session) {
 
         Long playerId = (Long) session.getAttribute("playerId");
+        // Null check: session may have expired mid-game
+        if (playerId == null) return Map.of("success", false, "coins", 0);
+
         Player player = playerService.getPlayerId(playerId);
+        if (player == null) return Map.of("success", false, "coins", 0);
+
         int cost = 10;
 
         if (player.getCoins() < cost) {
             return Map.of("success", false, "coins", player.getCoins());
         }
 
-        Player refreshed = playerService.getPlayerId(playerId);
-        Question question = questionService.getQuestionByLevel(refreshed.getCurrentLevel());
+        Question question = questionService.getQuestionByLevel(player.getCurrentLevel());
+        if (question == null) return Map.of("success", false, "coins", player.getCoins());
+
         String answer = question.getAnswer();
 
-        // Parse which positions the client already revealed
         Set<Integer> revealedSet = new HashSet<>();
         if (!revealed.isBlank()) {
             for (String s : revealed.split(",")) {
@@ -260,7 +299,6 @@ public class GameController {
             }
         }
 
-        // Collect unrevealed non-space positions
         List<Integer> candidates = new ArrayList<>();
         for (int i = 0; i < answer.length(); i++) {
             if (answer.charAt(i) != ' ' && !revealedSet.contains(i)) {
@@ -273,7 +311,7 @@ public class GameController {
         }
 
         playerService.addCoins(playerId, (long) -cost);
-        refreshed = playerService.getPlayerId(playerId);
+        Player refreshed = playerService.getPlayerId(playerId);
 
         int idx = candidates.get(new Random().nextInt(candidates.size()));
         String letter = String.valueOf(answer.charAt(idx)).toUpperCase();
@@ -317,27 +355,18 @@ public class GameController {
         return "tutorial";
     }
 
-     
-    /*@GetMapping("/profile")
-    public String showProfile(HttpSession session, Model model) {
-        Long playerId = (Long) session.getAttribute("playerId");
-        if (playerId == null) return "redirect:/";
-        model.addAttribute("player", playerService.getPlayerId(playerId));
-        return "profile";
-    }*/
-
     @GetMapping("/profile")
     public String showProfile(HttpSession session, Model model) {
         Long playerId = (Long) session.getAttribute("playerId");
         if (playerId == null) return "redirect:/";
-        
+
         Player player = playerService.getPlayerId(playerId);
         List<Player> leaderboard = playerService.getLeaderboard();
-        
+
         model.addAttribute("player", player);
         model.addAttribute("leaderboard", leaderboard);
-        model.addAttribute("levelsCompleted", player.getCurrentLevel() - 1); 
-        
+        model.addAttribute("levelsCompleted", player.getCurrentLevel() - 1);
+
         return "profile";
     }
 }

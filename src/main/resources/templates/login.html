@@ -400,6 +400,9 @@
                 color:#ff6666;
                 margin-bottom:20px;">
                 <span th:if="${param.error[0] == 'wrong_password'}">Username Already Taken or Wrong password. Try again. </span>
+                <span th:if="${param.error[0] == 'too_many_attempts'}">
+    Too many failed attempts. Try again in <span th:text="${param.mins}">30</span> minutes.
+</span>
                 <span th:if="${param.error[0] == 'invalid_username'}">Username must be 3–20 characters, letters and numbers only.</span>
                 </div>
 

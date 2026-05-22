@@ -1,3 +1,8 @@
+// Bug reported: Said "Query did not return a unique result: 3 results were returned"
+// Make coins default 0
+// Logic Fix: Should be Can't use Clue 3 if Clue 2 isnt usef, cant use clue 2 if clue 1 isnt used.
+// Double check if bug: When I added a queston (I Approved it), and i refreshed from user end, the user that finished the current questions doesnt have the new qeustions. Check if true as other •NEW• players have the levels
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -119,6 +124,8 @@
     </div>
 
     <!-- ACTIVE GAME -->
+     
+    <!-- ACTIVE GAME -->
     <div th:if="${!alreadyCompleted}" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:14px">
         <div class="level-pill">LEVEL <span th:text="${player.currentLevel}">1</span></div>
         <div class="imgs">
@@ -143,10 +150,12 @@
             <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
             <div class="clue-btn" id="letter-btn" onclick="useLetterClue()">Letter <span class="clue-cost" id="cc-letter">| 10 🪙</span></div>
         </div>
-    </div>
-    <a class="back-link" href="/home">Back to Home</a>
-</div>
 
+        <!-- MOVED HERE: Now perfectly nested inside the active game flex layout -->
+        <a class="back-link" href="/home" style="margin-top: 10px;">← Back to Home</a>
+    </div>
+</div>
+<a th:if="${!alreadyCompleted}" class="back-link" href="/home">Back to Home</a>
 <div class="correct-overlay" id="correct-overlay">
     <div class="correct-card">
         <div class="emoji">🎉</div>
