@@ -2,10 +2,20 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1200">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Linkr — How to Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+    @media (max-width: 768px) {
+    .header { padding: 10px 16px; }
+    .main { padding: 80px 16px 60px; }
+    .hero h1 { font-size: 30px; }
+    .ex-imgs { gap: 6px; }
+    .ex-img { max-width: 100px; }
+    .ex-tag { font-size: 10px; }
+    .clue-row { flex-direction: column; }
+    .clue-demo { width: 100%; }
+}
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;min-height:100vh}
 

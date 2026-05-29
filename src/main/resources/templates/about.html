@@ -2,10 +2,16 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=1200">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Linkr — About</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    @media (max-width: 768px) {
+    .header { padding: 10px 16px; }
+    .nav { display: none; }
+    .main { padding: 80px 16px 40px; }
+    h1 { font-size: 28px; }
+}
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#0d0007;font-family:'Inter',sans-serif;color:#fff;min-height:100vh}
     .header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;background:rgba(10,0,6,0.8);backdrop-filter:blur(16px);border-bottom:0.5px solid rgba(204,34,102,0.15)}

@@ -2,11 +2,20 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1200">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Linkr — Profile</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        @media (max-width: 768px) {
+    .header { padding: 10px 16px; }
+    .nav-link { display: none; }
+    .coin-badge { font-size: 12px; padding: 4px 10px; }
+    .page { margin-top: 80px; padding: 0 16px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { padding: 20px; }
+    .card-value { font-size: 18px; }
+}
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #0d0007; font-family: 'Inter', sans-serif; color: #fff; min-height: 100vh; }
 

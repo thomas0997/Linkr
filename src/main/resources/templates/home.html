@@ -2,12 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=1200">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Linkr — Home</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-
+    @media (max-width: 768px) {
+    body { overflow-y: auto; height: auto; min-height: 100vh; }
+    .main { position: relative; padding: 80px 16px 32px; }
+    .header { padding: 10px 16px; }
+    .nav-link { display: none; }
+    .profile-btn { display: none; }
+    .level-badge { font-size: 12px; padding: 5px 10px; }
+    .card { padding: 16px; }
+    .btns { max-width: 100%; }
+}
     
     *{
       box-sizing:border-box;margin:0
