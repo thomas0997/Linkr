@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
         <head>
             <meta charset="UTF-8">
-            <meta name="viewport" content="width=100, minimum-scale=0.2, maximum-scale=0.3, initial-scale=0.2">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             
 
                 <title>Linkr — Guess the Link</title>
@@ -314,6 +314,21 @@
                     color:var(--muted);
                     background:rgba(255,255,255,0.03);
                     backdrop-filter:blur(8px);
+                }
+                @media (max-width: 768px) {
+                    html, body { overflow-y: auto; }
+                    .page { grid-template-columns: 1fr; min-width: unset; }
+                    .left { display: none; }
+                    .divider { display: none; }
+                    .right {
+                        padding: 48px 28px;
+                        min-height: 100vh;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                    }
+                    .welcome h2 { font-size: 32px; }
+                    .welcome p { margin-bottom: 28px; }
                 }
             </style>
     </head>
