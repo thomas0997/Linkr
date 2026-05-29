@@ -82,8 +82,8 @@
     .correct-card { padding: 32px 24px; margin: 16px; }
     .correct-card h2 { font-size: 28px; }
     .clue-cost { display: none; }
-.clue-btn { font-size: 11px; }
-    .correct-card .coins-earned { font-size: 40px; }
+    .clue-btn { font-size: 11px; }
+    .clue-btn::after { content: attr(data-cost); font-size: 9px; color: rgba(255,255,255,0.4); display: block; margin-top: 2px; }
 }
 </style>
 </head>
@@ -161,10 +161,10 @@
             <div class="tries-label" id="tries-label">0/10 Tries</div>
         </div>
         <div class="clue-row">
-            <div class="clue-btn" id="cb0" onclick="useClue(0)">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
-            <div class="clue-btn" id="cb1" onclick="useClue(1)">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
-            <div class="clue-btn" id="cb2" onclick="useClue(2)">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
-            <div class="clue-btn" id="letter-btn" onclick="useLetterClue()">Letter <span class="clue-cost" id="cc-letter">| 10 🪙</span></div>
+            <div class="clue-btn" id="cb0" onclick="useClue(0)" data-cost="2🪙">Clue 1 <span class="clue-cost" id="cc0">| 2 🪙</span></div>
+            <div class="clue-btn" id="cb1" onclick="useClue(1)" data-cost="4🪙">Clue 2 <span class="clue-cost" id="cc1">| 4 🪙</span></div>
+            <div class="clue-btn" id="cb2" onclick="useClue(2)" data-cost="8🪙">Clue 3 <span class="clue-cost" id="cc2">| 8 🪙</span></div>
+            <div class="clue-btn" id="letter-btn" onclick="useLetterClue()" data-cost="10🪙">Letter <span class="clue-cost" id="cc-letter">| 10 🪙</span></div>
         </div>
 
         <!-- MOVED HERE: Now perfectly nested inside the active game flex layout -->
