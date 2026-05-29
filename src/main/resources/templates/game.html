@@ -81,6 +81,8 @@
     .clue-row { gap: 5px; }
     .correct-card { padding: 32px 24px; margin: 16px; }
     .correct-card h2 { font-size: 28px; }
+    .clue-cost { display: none; }
+.clue-btn { font-size: 11px; }
     .correct-card .coins-earned { font-size: 40px; }
 }
 </style>
@@ -169,7 +171,6 @@
         <a class="back-link" href="/home" style="margin-top: 10px;">← Back to Home</a>
     </div>
 </div>
-<a th:if="${!alreadyCompleted}" class="back-link" href="/home">Back to Home</a>
 <div class="correct-overlay" id="correct-overlay">
     <div class="correct-card">
         <div class="emoji">🎉</div>
