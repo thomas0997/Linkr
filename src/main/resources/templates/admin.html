@@ -64,10 +64,57 @@
      th:text="${message != null ? message : 'Ready to generate.'}">Ready to generate.</p>
   <p class="msg err" th:if="${error}" th:text="${error}"></p>
 
-  <!-- Generate button — only when no question is being reviewed -->
-  <form method="POST" th:action="@{/admin/generate}" th:if="${generated == null}">
-    <button class="btn" type="submit">Generate Question ↗</button>
-  </form>
+  <!-- Manual entry form -->
+<div class="card" th:if="${generated == null}" id="manual-card">
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px">Manual Question Entry</div>
+
+    <form method="POST" th:action="@{/admin/approve}">
+        <div class="imgs">
+            <div class="img-slot">
+                <div class="img-preview"><img id="manual-img1" src="" style="display:none"><div class="placeholder" id="manual-ph1">Paste URL below</div></div>
+                <input class="keyword-input" type="text" name="imageUrl1" id="manual-url1" placeholder="Image 1 URL" oninput="previewManual(1)">
+            </div>
+            <div class="img-slot">
+                <div class="img-preview"><img id="manual-img2" src="" style="display:none"><div class="placeholder" id="manual-ph2">Paste URL below</div></div>
+                <input class="keyword-input" type="text" name="imageUrl2" id="manual-url2" placeholder="Image 2 URL" oninput="previewManual(2)">
+            </div>
+            <div class="img-slot">
+                <div class="img-preview"><img id="manual-img3" src="" style="display:none"><div class="placeholder" id="manual-ph3">Paste URL below</div></div>
+                <input class="keyword-input" type="text" name="imageUrl3" id="manual-url3" placeholder="Image 3 URL" oninput="previewManual(3)">
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Answer</label>
+            <input class="keyword-input" style="width:100%;font-size:14px;padding:8px 12px" type="text" name="answer" placeholder="e.g. Capital Cities" required>
+        </div>
+        <div class="field">
+            <label>Clue 1</label>
+            <input class="keyword-input" style="width:100%" type="text" name="clue1" placeholder="Vague category hint" required>
+        </div>
+        <div class="field">
+            <label>Clue 2</label>
+            <input class="keyword-input" style="width:100%" type="text" name="clue2" placeholder="Narrows it down" required>
+        </div>
+        <div class="field">
+            <label>Clue 3</label>
+            <input class="keyword-input" style="width:100%" type="text" name="clue3" placeholder="Almost gives it away" required>
+        </div>
+
+        <div class="actions">
+            <div>
+                <label style="font-size:12px;color:rgba(255,255,255,0.4)">Level:</label>
+                <input class="level-input" type="number" name="levelNumber" min="1" th:value="${nextLevel}">
+            </div>
+            <button class="btn" type="submit">✓ Save Question</button>
+        </div>
+    </form>
+</div>
+
+<!-- Generate button -->
+<form method="POST" th:action="@{/admin/generate}" th:if="${generated == null}" style="margin-top:12px">
+    <button class="btn secondary" type="submit">Generate with AI ↗</button>
+</form>
 
   <!-- ── Review card ── -->
   <div class="card" th:if="${generated != null}" id="review-card">
@@ -277,6 +324,22 @@ function submitRegenWithReason() {
     document.getElementById('regen-theme-input').value  = theme;
     document.getElementById('regen-form').submit();
 }
+
+function previewManual(slot) {
+    const url = document.getElementById('manual-url' + slot).value.trim();
+    const img = document.getElementById('manual-img' + slot);
+    const ph  = document.getElementById('manual-ph' + slot);
+    if (url) {
+        img.src = url;
+        img.style.display = 'block';
+        ph.style.display = 'none';
+        img.onerror = () => { img.style.display='none'; ph.style.display='flex'; ph.textContent='Bad URL'; };
+    } else {
+        img.style.display = 'none';
+        ph.style.display = 'flex';
+        ph.textContent = 'Paste URL below';
+    }
+}s
 </script>
 
 </body>
