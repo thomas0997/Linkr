@@ -155,7 +155,17 @@ public class GameController {
         if (question != null) {
             GameProgress progress = gameProgressRepo.findByPlayerIdAndQuestionId(playerId, question.getId());
             alreadyCompleted = progress != null && progress.getIsComplete();
+
+            if (alreadyCompleted) {
+                Question nextQuestion = questionService.getQuestionByLevel(player.getCurrentLevel() + 1);
+                if (nextQuestion != null) {
+                    gameService.unlockNextLevel(playerId);
+                    return "redirect:/game";
+                }
+            }
         }
+
+        
 
         String answerPattern = "";
         if (question != null && question.getAnswer() != null) {
@@ -167,6 +177,7 @@ public class GameController {
         model.addAttribute("alreadyCompleted", alreadyCompleted);
         model.addAttribute("answerPattern", answerPattern);
         return "game";
+        
     }
 
     // ── Guess — server checks answer, server tracks tries, server calculates coins
